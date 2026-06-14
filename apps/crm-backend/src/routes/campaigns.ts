@@ -236,6 +236,41 @@ router.post('/:id/complete', async (req, res) => {
     );
     const clickNoBuyIds = clickNoBuyRows.map(r => r.customer_id);
 
+    // Fetch A/B variant breakdown stats if applicable
+    let abTestResults = null;
+    if (campaign.is_ab_test) {
+      const { rows: rowsA } = await pool.query(
+        `SELECT COUNT(id) as sent,
+                COUNT(id) FILTER (WHERE status = 'converted') as converted
+         FROM campaign_messages WHERE campaign_id = $1 AND ab_variant = 'A'`,
+        [id]
+      );
+      const { rows: rowsB } = await pool.query(
+        `SELECT COUNT(id) as sent,
+                COUNT(id) FILTER (WHERE status = 'converted') as converted
+         FROM campaign_messages WHERE campaign_id = $1 AND ab_variant = 'B'`,
+        [id]
+      );
+      const sentA = parseInt(rowsA[0].sent, 10) || 0;
+      const convA = parseInt(rowsA[0].converted, 10) || 0;
+      const sentB = parseInt(rowsB[0].sent, 10) || 0;
+      const convB = parseInt(rowsB[0].converted, 10) || 0;
+      
+      const rateA = sentA > 0 ? (convA / sentA) : 0;
+      const rateB = sentB > 0 ? (convB / sentB) : 0;
+      
+      abTestResults = {
+        variantASent: sentA,
+        variantAConverted: convA,
+        variantAConversionRate: Math.round(rateA * 100),
+        variantBSent: sentB,
+        variantBConverted: convB,
+        variantBConversionRate: Math.round(rateB * 100),
+        winner: rateB > rateA ? 'Version B' : (rateA > rateB ? 'Version A' : 'Tie'),
+        improvementPercent: rateA > 0 ? Math.round(((rateB - rateA) / rateA) * 100) : 0
+      };
+    }
+
     // 4. Generate AI debrief
     const debriefStats = {
       campaignName: campaign.name,
@@ -247,6 +282,7 @@ router.post('/:id/complete', async (req, res) => {
       clickedRate,
       convertedRate,
       clickNoBuyCount: clickNoBuyIds.length,
+      abTestResults
     };
 
     const debrief = await aiAgent.generateCampaignDebrief(debriefStats);

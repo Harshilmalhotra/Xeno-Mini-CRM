@@ -176,7 +176,7 @@ export async function generateCampaignDebrief(
 Output ONLY a JSON object matching the requested schema.
 
 Rules:
-- summary: A 2-3 sentence review summarizing the outcome (e.g., "The campaign hit its goal, converting 15% of lapsed customers. WhatsApp proved to be extremely responsive, while email lags behind.")
+- summary: A 2-3 sentence review summarizing the outcome (e.g., "The campaign hit its goal, converting 15% of lapsed customers. WhatsApp proved to be extremely responsive, while email lags behind."). If A/B test results are present in statistics, compare Variant A vs Variant B and state the winner.
 - bestChannel: The name of the channel that had the best response, or null.
 - recommendation: 1-2 sentences with concrete recommendations for what to do next.
 - bestSendTime: Recommended send time (e.g. '7–9 PM' or '9–11 AM'), or null.`,

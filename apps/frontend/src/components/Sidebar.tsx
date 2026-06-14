@@ -94,7 +94,7 @@ export function Sidebar() {
             fontFamily: theme.typography.fontMono,
             marginTop: '2px'
           }}>
-            powered by Xeno Mini
+            powered by Xeno Autopilot
           </p>
         </div>
 
