@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { pool } from '../db';
 import * as campaignRunner from '../services/campaignRunner';
+import * as aiAgent from '../services/aiAgent';
+import { broadcast } from '../ws/broadcaster';
 
 const router = Router();
 
@@ -154,6 +156,96 @@ router.get('/:id/messages', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch campaign messages' });
+  }
+});
+
+// POST /api/campaigns/:id/complete
+router.post('/:id/complete', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // 1. Mark campaign as completed in DB
+    await pool.query("UPDATE campaigns SET status = 'completed' WHERE id = $1", [id]);
+
+    // 2. Fetch campaign details and stats
+    const campaignQuery = `
+      SELECT c.*, s.name as segment_name
+      FROM campaigns c
+      JOIN segments s ON s.id = c.segment_id
+      WHERE c.id = $1
+    `;
+    const { rows: campaignRows } = await pool.query(campaignQuery, [id]);
+    if (campaignRows.length === 0) {
+      res.status(404).json({ error: 'Campaign not found' });
+      return;
+    }
+    const campaign = campaignRows[0];
+
+    const statsQuery = `
+      SELECT 
+        COUNT(id) FILTER (WHERE status != 'pending') AS sent,
+        COUNT(id) FILTER (WHERE status IN ('delivered','opened','clicked','converted')) AS delivered,
+        COUNT(id) FILTER (WHERE status IN ('opened','clicked','converted')) AS opened,
+        COUNT(id) FILTER (WHERE status IN ('clicked','converted')) AS clicked,
+        COUNT(id) FILTER (WHERE status = 'converted') AS converted,
+        COUNT(id) FILTER (WHERE status = 'failed') AS failed
+      FROM campaign_messages
+      WHERE campaign_id = $1
+    `;
+    const { rows: statsRows } = await pool.query(statsQuery, [id]);
+    const dbStats = statsRows[0];
+    const totalSent = parseInt(dbStats.sent, 10) || 0;
+
+    const deliveredRate = totalSent > 0 ? (parseInt(dbStats.delivered, 10) / totalSent) : 0;
+    const openedRate = totalSent > 0 ? (parseInt(dbStats.opened, 10) / totalSent) : 0;
+    const clickedRate = totalSent > 0 ? (parseInt(dbStats.clicked, 10) / totalSent) : 0;
+    const convertedRate = totalSent > 0 ? (parseInt(dbStats.converted, 10) / totalSent) : 0;
+
+    // 3. Find click-but-no-buy customer IDs (status is clicked, not converted)
+    const { rows: clickNoBuyRows } = await pool.query(
+      "SELECT customer_id FROM campaign_messages WHERE campaign_id = $1 AND status = 'clicked'",
+      [id]
+    );
+    const clickNoBuyIds = clickNoBuyRows.map(r => r.customer_id);
+
+    // 4. Generate AI debrief
+    const debriefStats = {
+      campaignName: campaign.name,
+      channel: campaign.channel,
+      goal: campaign.goal,
+      totalSent,
+      deliveredRate,
+      openedRate,
+      clickedRate,
+      convertedRate,
+      clickNoBuyCount: clickNoBuyIds.length,
+    };
+
+    const debrief = await aiAgent.generateCampaignDebrief(debriefStats);
+
+    // 5. Save debrief to DB
+    await pool.query(
+      `INSERT INTO campaign_debriefs (campaign_id, summary, best_channel, click_no_buy_ids, recommendation, best_send_time)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (campaign_id) DO UPDATE
+       SET summary = EXCLUDED.summary,
+           best_channel = EXCLUDED.best_channel,
+           click_no_buy_ids = EXCLUDED.click_no_buy_ids,
+           recommendation = EXCLUDED.recommendation,
+           best_send_time = EXCLUDED.best_send_time`,
+      [id, debrief.summary, debrief.bestChannel, clickNoBuyIds, debrief.recommendation, debrief.bestSendTime]
+    );
+
+    // 6. Broadcast completed status to WebSockets
+    broadcast({
+      type: 'campaign_completed',
+      campaignId: id,
+      debriefReady: true,
+    });
+
+    res.json({ success: true, debrief });
+  } catch (err) {
+    console.error("Error completing campaign:", err);
+    res.status(500).json({ error: 'Failed to complete campaign and generate debrief' });
   }
 });
 
