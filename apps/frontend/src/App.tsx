@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Campaigns } from './pages/Campaigns';
 import { Customers } from './pages/Customers';
 import { Analytics } from './pages/Analytics';
+import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/analytics" element={<Analytics />} />
         </Routes>
       </Layout>
+      <VercelAnalytics />
     </BrowserRouter>
   );
 }
