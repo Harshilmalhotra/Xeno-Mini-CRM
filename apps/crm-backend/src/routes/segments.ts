@@ -60,18 +60,39 @@ router.post('/preview', async (req, res) => {
 // POST /api/segments
 router.post('/', async (req, res) => {
   const { name, nlQuery, sqlFilter, customerIds, description } = req.body;
-  if (!name || !nlQuery || !sqlFilter || !customerIds) {
+  if (!name || !nlQuery || !sqlFilter) {
     res.status(400).json({ error: 'Missing required parameters' });
     return;
   }
   try {
-    const customerCount = customerIds.length;
-    const { rows } = await pool.query(
+    let resolvedCustomerIds = customerIds || [];
+    
+    // Always query database to get actual matching customer IDs for safety
+    if (!resolvedCustomerIds || resolvedCustomerIds.length === 0) {
+      const query = `
+        SELECT id FROM (
+          SELECT c.id, c.name, c.email, c.city,
+                 MAX(o.ordered_at) AS last_order_date,
+                 COUNT(o.id) AS order_count,
+                 COALESCE(SUM(o.amount), 0) AS total_spend,
+                 COALESCE(EXTRACT(DAY FROM NOW() - MAX(o.ordered_at)), 999) AS days_since_last_order
+          FROM customers c
+          LEFT JOIN orders o ON o.customer_id = c.id
+          GROUP BY c.id, c.name, c.email, c.city
+        ) c
+        WHERE ${sqlFilter}
+      `;
+      const { rows } = await pool.query(query);
+      resolvedCustomerIds = rows.map((r: any) => r.id);
+    }
+
+    const customerCount = resolvedCustomerIds.length;
+    const { rows: insertRows } = await pool.query(
       `INSERT INTO segments (name, description, nl_query, sql_filter, customer_ids, customer_count)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [name, description || '', nlQuery, sqlFilter, customerIds, customerCount]
+      [name, description || '', nlQuery, sqlFilter, resolvedCustomerIds, customerCount]
     );
-    res.status(201).json(rows[0]);
+    res.status(201).json(insertRows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to save segment' });
