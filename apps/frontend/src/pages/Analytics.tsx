@@ -68,7 +68,7 @@ export function Analytics() {
       setFunnelData([
         { value: active, name: 'Active (0-7d)', fill: theme.colors.churnLow },
         { value: atRisk, name: 'At-Risk (8-30d)', fill: theme.colors.churnMedium },
-        { value: lapsing, name: 'Lapsing (31-60d)', fill: '#D38A37' },
+        { value: lapsing, name: 'Lapsing (31-60d)', fill: theme.colors.churnLapsing },
         { value: churned, name: 'Churned (60d+)', fill: theme.colors.churnHigh },
       ]);
 

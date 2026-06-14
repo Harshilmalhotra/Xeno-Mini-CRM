@@ -40,6 +40,7 @@ export const theme = {
     // Churn risk
     churnLow: '#1D9E75',
     churnMedium: '#BA7517',
+    churnLapsing: '#D38A37',
     churnHigh: '#C0392B',
 
     // Borders
