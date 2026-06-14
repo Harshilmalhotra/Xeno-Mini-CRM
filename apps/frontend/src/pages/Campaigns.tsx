@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import { LiveCampaignTracker } from '../components/LiveCampaignTracker';
 import { AiDebriefCard } from '../components/AiDebriefCard';
 import { useNavigate } from 'react-router-dom';
+import { Trophy } from 'lucide-react';
 
 export function Campaigns() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -223,7 +224,10 @@ export function Campaigns() {
                                     marginTop: theme.spacing.sm,
                                     textAlign: 'center'
                                   }}>
-                                    🏆 Winner: {c.debrief.ab_test_results.winner} {c.debrief.ab_test_results.improvementPercent > 0 ? `(outperformed Version A by +${c.debrief.ab_test_results.improvementPercent}%)` : ''}
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                                      <Trophy size={14} />
+                                      <span>Winner: {c.debrief.ab_test_results.winner} {c.debrief.ab_test_results.improvementPercent > 0 ? `(outperformed Version A by +${c.debrief.ab_test_results.improvementPercent}%)` : ''}</span>
+                                    </div>
                                   </div>
                                 </div>
                               )}

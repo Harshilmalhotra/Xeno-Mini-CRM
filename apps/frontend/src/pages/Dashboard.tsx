@@ -8,6 +8,7 @@ import { LiveCampaignTracker } from '../components/LiveCampaignTracker';
 import { AiDebriefCard } from '../components/AiDebriefCard';
 import { StatCard } from '../components/StatCard';
 import { useSearchParams } from 'react-router-dom';
+import { Target, Crown, Trophy } from 'lucide-react';
 
 export function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -714,8 +715,15 @@ export function Dashboard() {
             gap: theme.spacing.md
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: theme.typography.sizeBase, fontWeight: theme.typography.weightBold }}>
-                🎯 AI Opportunity Discovery
+              <h3 style={{
+                fontSize: theme.typography.sizeBase,
+                fontWeight: theme.typography.weightBold,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: theme.spacing.sm
+              }}>
+                <Target size={18} style={{ color: theme.colors.accent }} />
+                <span>AI Opportunity Discovery</span>
               </h3>
               <button
                 onClick={handleFindOpportunities}
@@ -797,8 +805,15 @@ export function Dashboard() {
             flexDirection: 'column',
             gap: theme.spacing.md
           }}>
-            <h3 style={{ fontSize: theme.typography.sizeBase, fontWeight: theme.typography.weightBold }}>
-              👑 Loyalty Tier Distribution
+            <h3 style={{
+              fontSize: theme.typography.sizeBase,
+              fontWeight: theme.typography.weightBold,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: theme.spacing.sm
+            }}>
+              <Crown size={18} style={{ color: theme.colors.accent }} />
+              <span>Loyalty Tier Distribution</span>
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.md, marginTop: theme.spacing.sm }}>
               {Object.entries(loyaltyCounts).map(([tier, count], idx) => {
@@ -836,8 +851,15 @@ export function Dashboard() {
             flexDirection: 'column',
             gap: theme.spacing.md
           }}>
-            <h3 style={{ fontSize: theme.typography.sizeBase, fontWeight: theme.typography.weightBold }}>
-              🏆 Top Revenue Campaigns
+            <h3 style={{
+              fontSize: theme.typography.sizeBase,
+              fontWeight: theme.typography.weightBold,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: theme.spacing.sm
+            }}>
+              <Trophy size={18} style={{ color: theme.colors.accent }} />
+              <span>Top Revenue Campaigns</span>
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
               {revenueLeaderboard.length === 0 ? (

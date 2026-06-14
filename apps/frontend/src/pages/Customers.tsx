@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { theme } from '../theme';
 import { api } from '../api/client';
 import { ChurnRingBadge } from '../components/ChurnRingBadge';
+import { MapPin, Coffee } from 'lucide-react';
 
 const getLoyaltyTierInfo = (totalSpend: number) => {
   if (totalSpend > 10000) {
@@ -269,8 +270,15 @@ export function Customers() {
                         {loyaltyInfo.tier}
                       </span>
                     </div>
-                    <p style={{ fontSize: theme.typography.sizeSm, color: theme.colors.textSecondary }}>
-                      📍 {c.city}
+                    <p style={{
+                      fontSize: theme.typography.sizeSm,
+                      color: theme.colors.textSecondary,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      <MapPin size={12} style={{ color: theme.colors.textTertiary }} />
+                      <span>{c.city}</span>
                     </p>
                   </div>
                 </div>
@@ -311,7 +319,8 @@ export function Customers() {
                       fontWeight: theme.typography.weightBold,
                       marginTop: '2px'
                     }}>
-                      ☕ {c.topProduct}
+                      <Coffee size={12} style={{ marginRight: '4px', color: theme.colors.accent }} />
+                      <span>{c.topProduct}</span>
                     </div>
                   </div>
                 </div>
