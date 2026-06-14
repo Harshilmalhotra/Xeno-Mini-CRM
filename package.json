@@ -9,6 +9,10 @@
     "dev:backend": "npm run dev --workspace=crm-backend",
     "dev:frontend": "npm run dev --workspace=frontend",
     "dev:stub": "npm run dev --workspace=channel-stub",
+    "build:backend": "npm run build --workspace=crm-backend",
+    "build:stub": "npm run build --workspace=channel-stub",
+    "start:backend": "npm run start --workspace=crm-backend",
+    "start:stub": "npm run start --workspace=channel-stub",
     "seed": "npm run seed --workspace=crm-backend"
   }
 }
