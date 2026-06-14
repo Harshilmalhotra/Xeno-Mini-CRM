@@ -103,6 +103,7 @@ export async function launch(campaignId: string): Promise<void> {
             channel: campaign.channel,
             message: messageText,
             campaignId,
+            totalMessages: customerIds.length,
           }),
         });
 
