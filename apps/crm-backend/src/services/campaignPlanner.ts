@@ -98,11 +98,16 @@ Provide high-quality reasoning details for explainable AI:
     const parsed = JSON.parse(response.text || '{}');
     const segmentFilter = parsed.generatedSegmentQuery.trim();
 
-    // Now query the database to get actual reach
+    // Now query the database to get actual reach and historical spend metrics
     let actualReach = 0;
+    let averageOrderValue = 450; // default fallback
     try {
       const dbQuery = `
-        SELECT COUNT(*) as count FROM (
+        SELECT 
+          COUNT(*) as count,
+          COALESCE(SUM(total_spend), 0) as total_spend,
+          COALESCE(SUM(order_count), 0) as total_orders
+        FROM (
           SELECT c.id, c.name, c.email, c.city,
                  MAX(o.ordered_at) AS last_order_date,
                  COUNT(o.id) AS order_count,
@@ -116,6 +121,11 @@ Provide high-quality reasoning details for explainable AI:
       `;
       const { rows } = await pool.query(dbQuery);
       actualReach = parseInt(rows[0].count, 10) || 0;
+      const totalSpend = parseFloat(rows[0].total_spend) || 0;
+      const totalOrders = parseInt(rows[0].total_orders, 10) || 0;
+      if (totalOrders > 0) {
+        averageOrderValue = Math.round(totalSpend / totalOrders);
+      }
     } catch (dbErr) {
       console.error('Failed to run planner query on database:', dbErr);
       // Fallback to a random number between 5 and 30 if query fails
@@ -125,7 +135,6 @@ Provide high-quality reasoning details for explainable AI:
     // Heuristics for conversion rate and revenue estimates
     const conversionRate = 0.12 + Math.random() * 0.08; // ~12% - 20%
     const expectedConversions = Math.round(actualReach * conversionRate);
-    const averageOrderValue = 450; // Average ₹450 spent on a promo order
     const expectedRevenue = expectedConversions * averageOrderValue;
 
     return {
