@@ -6,6 +6,49 @@ An intelligent, AI-native autonomous marketing strategist and campaign execution
 
 ---
 
+## Demo
+
+Live Application:
+https://xeno-autopilot.vercel.app/
+
+Walkthrough Video:
+https://youtu.be/1u
+
+Source Code:
+https://github.com/Harshilmalhotra/Xeno-Mini-CRM
+
+---
+
+## Why This Exists
+
+Most CRM systems optimize campaign execution.
+
+Xeno Autopilot optimizes campaign decision-making.
+
+Instead of asking marketers to decide the audience, offer, channel, and timing, the AI proposes, explains, and executes campaigns aligned to business goals.
+
+---
+
+## Product Walkthrough
+
+### AI Campaign Planner
+
+![Campaign Planner](./docs/screenshots/planner.png)
+
+### Opportunity Discovery
+
+![Opportunity Discovery](./docs/screenshots/opportunities.png)
+
+### Live Campaign Tracker
+
+![Live Tracker](./docs/screenshots/tracker.png)
+
+### Customer Digital Twin
+
+![Digital Twin](./docs/screenshots/customer.png)
+
+---
+
 ## Traditional CRM vs. Xeno Autopilot
 
 | Aspect | Traditional CRM | Xeno Autopilot |
@@ -43,7 +86,44 @@ graph TD
     Backend -->|15. Push Final Insights| Frontend
 ```
 
-### 2. Goal-Based Autonomous Agent Flow (UML Sequence)
+### 2. Multi-Agent Architecture
+
+Even if implemented through one Gemini service, this demonstrates the intended agentic workflow.
+
+```mermaid
+graph TD
+    subgraph UI [Marketer Client UI]
+        Dashboard[Vite React Dashboard]
+    end
+
+    subgraph Orchestrator [Agent Orchestrator Backend]
+        Engine[Express Server Engine]
+    end
+
+    subgraph Specialized Agents [Specialized AI Agents]
+        PlannerAgent[Strategist Agent<br>Plans segments, A/B offers, channels]
+        CopywriterAgent[Copywriter Agent<br>Personalizes batch messaging]
+        AnalystAgent[Analyst Agent<br>Diagnoses A/B performance & debriefs]
+        TwinAgent[Digital Twin Agent<br>Synthesizes profile summaries & NBA]
+    end
+
+    subgraph LLM [Foundation Model]
+        Gemini[Gemini Flash API]
+    end
+
+    Dashboard <-->|Goal Input / Live Telemetry| Engine
+    Engine <-->|Delegate Planning| PlannerAgent
+    Engine <-->|Delegate Copy Generation| CopywriterAgent
+    Engine <-->|Delegate Debriefing| AnalystAgent
+    Engine <-->|Delegate Profiling| TwinAgent
+
+    PlannerAgent <--> Gemini
+    CopywriterAgent <--> Gemini
+    AnalystAgent <--> Gemini
+    TwinAgent <--> Gemini
+```
+
+### 3. Goal-Based Autonomous Agent Flow (UML Sequence)
 The diagram below maps the complete multi-step autonomous planning, execution, callback receipt simulation, and WebSocket feed pipeline:
 
 ```mermaid
@@ -126,7 +206,7 @@ sequenceDiagram
     deactivate BE
 ```
 
-### 3. Database Entity Relationship Diagram (UML ERD)
+### 4. Database Entity Relationship Diagram (UML ERD)
 Schema mappings configured inside Supabase Postgres instance, supporting relational cascade deletions and indices for performant querying:
 
 ```mermaid
@@ -219,25 +299,35 @@ erDiagram
 ## Core Feature Highlights
 
 ### 🚀 Autonomous Strategist & Planner
-- 🤖 **Goal-Based Autonomous Agent (Phase 16):** Marketers type an objective. A visual timeline ([Dashboard.tsx](file:///Users/harshil/Desktop/xeno_mini/apps/frontend/src/pages/Dashboard.tsx)) animates the planning steps (Analyzing base, Generating segments, Estimating conversions, etc.) to deliver an end-to-end plan.
-- 🎯 **AI Campaign Planner (Phase 8):** Translates high-level goals into concrete campaign plans using the [campaignPlanner.ts](file:///Users/harshil/Desktop/xeno_mini/apps/crm-backend/src/services/campaignPlanner.ts) service, returning audience query, expected reach, target conversions, suggested offer, channel, and timing.
-- 🔍 **AI Opportunity Discovery (Phase 12):** Scans the database proactively in [opportunityDiscovery.ts](file:///Users/harshil/Desktop/xeno_mini/apps/crm-backend/src/services/opportunityDiscovery.ts) to find unexploited revenue pools (e.g. Cold Brew fans who haven't ordered recently), presenting opportunities with expected revenue projection.
+- 🤖 **Goal-Based Autonomous Agent (Phase 16):** Marketers type an objective. A visual timeline ([Dashboard.tsx](apps/frontend/src/pages/Dashboard.tsx)) animates the planning steps (Analyzing base, Generating segments, Estimating conversions, etc.) to deliver an end-to-end plan.
+- 🎯 **AI Campaign Planner (Phase 8):** Translates high-level goals into concrete campaign plans using the [campaignPlanner.ts](apps/crm-backend/src/services/campaignPlanner.ts) service, returning audience query, expected reach, target conversions, suggested offer, channel, and timing.
+- 🔍 **AI Opportunity Discovery (Phase 12):** Scans the database proactively in [opportunityDiscovery.ts](apps/crm-backend/src/services/opportunityDiscovery.ts) to find unexploited revenue pools (e.g. Cold Brew fans who haven't ordered recently), presenting opportunities with expected revenue projection.
 
 ### 🧪 Experimentation & Personalization
-- ⚖️ **AI Experiment Generator / A/B Splits (Phase 15):** Generates two different offer ideas (e.g., Variant A: *15% Discount* vs. Variant B: *Free Coffee Upgrade*), divides the segment 50/50, personalizes separate messages for each subset in [campaignRunner.ts](file:///Users/harshil/Desktop/xeno_mini/apps/crm-backend/src/services/campaignRunner.ts), and tracks which variant wins.
+- ⚖️ **AI Experiment Generator / A/B Splits (Phase 15):** Generates two different offer ideas (e.g., Variant A: *15% Discount* vs. Variant B: *Free Coffee Upgrade*), divides the segment 50/50, personalizes separate messages for each subset in [campaignRunner.ts](apps/crm-backend/src/services/campaignRunner.ts), and tracks which variant wins.
 - ✍️ **Bulk Copy Personalization:** Automatically crafts individual custom copy matching each user's flavor profile, name, and favorite drink.
 - 📡 **Real-Time WebSocket Campaign Tracking:** Tracks message lifecycle states (Sent, Delivered, Opened, Clicked, Converted, Failed) in a live dashboard view.
 
 ### 📊 Financial & Loyalty Intelligence
-- 💰 **Revenue Attribution & ROI (Phase 13):** Captures mock purchase conversions from the receipt webhook inside [receipts.ts](file:///Users/harshil/Desktop/xeno_mini/apps/crm-backend/src/routes/receipts.ts). Calculates and attributes exact campaign revenues and ROI metrics, rendering a **Top Revenue Campaigns** leaderboard on the dashboard.
+- 💰 **Revenue Attribution & ROI (Phase 13):** Captures mock purchase conversions from the receipt webhook inside [receipts.ts](apps/crm-backend/src/routes/receipts.ts). Calculates and attributes exact campaign revenues and ROI metrics, rendering a **Top Revenue Campaigns** leaderboard on the dashboard.
 - 🏆 **Loyalty Intelligence (Phase 9):** Computes customer loyalty tiers (Bronze, Silver, Gold, Platinum) dynamically from lifetime spend thresholds. AI automatically understands loyalty queries (e.g., *"our platinum customers"*), converting them to SQL.
-- 🧬 **Customer Digital Twin (Phase 14):** Generates custom summaries for customers based on behavior trends, channel preference, and purchase cycles via [customerTwin.ts](file:///Users/harshil/Desktop/xeno_mini/apps/crm-backend/src/services/customerTwin.ts), cached in Supabase (`customer_twins` table) for 24 hours to maximize performance.
-- 💡 **Next Best Action Engine (Phase 10):** Automatically calculates recommendations and confidence ratings (e.g., *"Send Subscription Offer (Confidence: 87%)"* due to past order gaps) in [nextBestAction.ts](file:///Users/harshil/Desktop/xeno_mini/apps/crm-backend/src/services/nextBestAction.ts).
+- 🧬 **Customer Digital Twin (Phase 14):** Generates custom summaries for customers based on behavior trends, channel preference, and purchase cycles via [customerTwin.ts](apps/crm-backend/src/services/customerTwin.ts), cached in Supabase (`customer_twins` table) for 24 hours to maximize performance.
+- 💡 **Next Best Action Engine (Phase 10):** Automatically calculates recommendations and confidence ratings (e.g., *"Send Subscription Offer (Confidence: 87%)"* due to past order gaps) in [nextBestAction.ts](apps/crm-backend/src/services/nextBestAction.ts).
 - 🔓 **Explainable AI (Phase 11):** Integrates transparent annotations explaining why specific segments, channels, or campaign targets were chosen by the AI.
 
-### 📈 Product Tracking & Telemetry
-- 📊 **Microsoft Clarity Integration:** Real-time visual heatmaps and user session recording streams recorded in the production interface.
-- ⚡ **Vercel Analytics:** Measures performance web vitals, speed indexes, and active user metrics natively.
+---
+
+## Campaign Simulation
+
+Before launch, Xeno Autopilot predicts:
+
+- **Expected Reach** (number of contacts matching target criteria)
+- **Expected Opens** (estimated visual engagement rate)
+- **Expected Clicks** (predicted link/offer interaction)
+- **Expected Conversions** (forecasted purchase events)
+- **Expected Revenue** (modeled financial outcome based on average order value)
+
+This allows marketers to evaluate campaigns before execution and compare different strategies.
 
 ---
 
@@ -260,17 +350,17 @@ npm install
 Set up local `.env` files in each service directory.
 
 #### Backend Env (`apps/crm-backend/.env`)
-Create [crm-backend/.env](file:///Users/harshil/Desktop/xeno_mini/apps/crm-backend/.env):
+Create [crm-backend/.env](apps/crm-backend/.env):
 ```ini
 DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-ID].supabase.co:5432/postgres
-GEMINI_API_KEY=AQ.Ab8RN6JO3k...
+GEMINI_API_KEY=your_gemini_api_key
 CHANNEL_STUB_URL=http://localhost:4001
 PORT=4000
 NODE_ENV=development
 ```
 
 #### Channel Stub Env (`apps/channel-stub/.env`)
-Create [channel-stub/.env](file:///Users/harshil/Desktop/xeno_mini/apps/channel-stub/.env):
+Create [channel-stub/.env](apps/channel-stub/.env):
 ```ini
 CRM_RECEIPT_URL=http://localhost:4000/api/receipts
 PORT=4001
@@ -278,11 +368,11 @@ NODE_ENV=development
 ```
 
 #### Frontend Env (`apps/frontend/.env`)
-Create [frontend/.env](file:///Users/harshil/Desktop/xeno_mini/apps/frontend/.env):
+Create [frontend/.env](apps/frontend/.env):
 ```ini
 VITE_CRM_API_URL=http://localhost:4000
 VITE_WS_URL=ws://localhost:4000
-VITE_CLARITY_PROJECT_ID=x71xodfw85
+VITE_CLARITY_PROJECT_ID=your_clarity_project_id
 ```
 
 ### 4. Database Schema Seeding
@@ -290,7 +380,7 @@ Initialize the database tables and populate the environment with 60 mock custome
 ```bash
 npm run seed
 ```
-This runs the SQL statements in [schema.sql](file:///Users/harshil/Desktop/xeno_mini/apps/crm-backend/src/db/schema.sql) and runs [seed.ts](file:///Users/harshil/Desktop/xeno_mini/apps/crm-backend/src/db/seed.ts).
+This runs the SQL statements in [schema.sql](apps/crm-backend/src/db/schema.sql) and runs [seed.ts](apps/crm-backend/src/db/seed.ts).
 
 ---
 
@@ -324,6 +414,31 @@ Open your browser to `http://localhost:5173`.
 
 ---
 
+## Key Engineering Decisions
+
+### Callback-Based Channel Architecture
+
+Instead of directly updating message statuses, a separate channel simulator asynchronously sends delivery receipts.
+
+**Reason:**
+This mirrors how real messaging providers such as WhatsApp, Email ESPs, and SMS gateways operate.
+
+### AI-Generated Segments
+
+Segments are generated from natural language and converted into SQL filters.
+
+**Reason:**
+Allows marketers to work in business language rather than database logic.
+
+### Event-Driven Campaign Tracking
+
+Message lifecycle changes are propagated via WebSockets.
+
+**Reason:**
+Provides real-time campaign visibility without polling.
+
+---
+
 ## Explicit Tradeoffs
 
 | Decision | What I did | What I'd do at scale |
@@ -333,14 +448,99 @@ Open your browser to `http://localhost:5173`.
 | **AI calls** | Parallel API batches of 30 items per request to Gemini Flash. | Background worker queue, token usage rate-limit throttling, query-level caching, and fallback model groups. |
 | **WebSocket** | Standard `ws` package attached to the Express HTTP handler. | Scalable standalone socket clusters (e.g., AWS API Gateway WebSockets, Socket.io with Redis adapter). |
 | **Authentication** | Open development endpoints without routing guards. | Auth0, JWT authorization tokens, and row-level security policy mappings in Postgres. |
-| **A/B Test Splits** | Split target segments in memory 50/50 inside [campaignRunner.ts](file:///Users/harshil/Desktop/xeno_mini/apps/crm-backend/src/services/campaignRunner.ts). | Dynamic server-side bucket allocation and feature-flag software integration (e.g., LaunchDarkly). |
+| **A/B Test Splits** | Split target segments in memory 50/50 inside [campaignRunner.ts](apps/crm-backend/src/services/campaignRunner.ts). | Dynamic server-side bucket allocation and feature-flag software integration (e.g., LaunchDarkly). |
 | **Digital Twin Caching** | Cached summaries written to a database table (`customer_twins`) with a 24-hour expiration check. | Distributed key-value cache layer (Redis or Memcached) with automatic expiration and event-driven invalidation. |
 | **Revenue Attribution** | Calculated by matching user IDs in receipt webhooks directly to the latest active campaign. | Multi-touch attribution models (first-touch, linear, time-decay) utilizing user session tracking and UTM parameters. |
 
 ---
 
-## AI Workflow
+## AI-Native Development Workflow
 
-This workspace was fully scaffolded, refactored, and tested end-to-end using **Antigravity**, an agentic AI coding companion designed by Google DeepMind.
-- All AI services utilize the Google Gen AI SDK (`@google/genai`) connecting to the fast and efficient **Gemini Flash** (`gemini-flash-latest`).
-- Development progress was tracked using local checklists ([task.md](file:///Users/harshil/.gemini/antigravity-ide/brain/e072da29-d9b4-4e25-a83e-52fcd3e79d64/task.md)) and verified via atomic git history snapshots.
+This project was built using an agentic AI development workflow.
+
+AI was used to:
+
+- Generate service scaffolding
+- Accelerate UI development
+- Create synthetic retail datasets
+- Generate test scenarios
+- Review and refactor code
+
+Engineering decisions remained human-driven:
+
+- Product scope
+- System architecture
+- Database design
+- Event-driven delivery lifecycle
+- Prompt engineering
+- Attribution logic
+- Scalability tradeoffs
+
+Development followed an iterative cycle:
+
+1. Define requirements
+2. Generate implementation plans
+3. Review AI output
+4. Refine architecture
+5. Implement and test
+6. Validate against product goals
+
+The objective was not to outsource development to AI, but to accelerate product engineering while maintaining ownership of all technical decisions.
+
+---
+
+## Scale Assumptions
+
+This implementation assumes:
+
+- 10k–50k customers
+- Hundreds of campaigns per month
+- Thousands of campaign events per day
+
+For this scope:
+
+- WebSockets are single-node
+- Event processing is in-process
+- AI requests are synchronous
+
+At larger scales these would migrate to:
+- Message queues
+- Worker pools
+- Distributed WebSocket infrastructure
+- Dedicated analytics pipelines
+
+--- 
+
+## What Makes This Different
+
+Most CRM systems optimize campaign execution.
+
+Xeno Autopilot optimizes campaign decision-making.
+
+The AI determines:
+
+- who to target
+- why they should be targeted
+- what offer to send
+- which channel to use
+- when to send
+- how success should be measured
+
+before a campaign is launched.
+
+---
+
+## Alignment With Xeno
+
+This project was intentionally designed around Xeno's vision of AI-native customer engagement.
+
+Key themes implemented:
+
+- Autonomous campaign planning
+- Loyalty intelligence
+- Customer lifecycle management
+- Explainable AI decisions
+- Revenue attribution
+- Agent-assisted execution
+
+The goal was to move beyond campaign execution and demonstrate how AI can participate in campaign strategy and decision-making.
