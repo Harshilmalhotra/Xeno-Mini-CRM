@@ -25,17 +25,19 @@ router.post('/preview', async (req, res) => {
   try {
     const { sqlFilter, description } = await aiAgent.generateSegmentFilter(nlQuery);
     
-    // Execute the SQL filter to get customer IDs and counts
+    // Execute the SQL filter to get customer IDs and counts by wrapping aggregates in a subquery c
     const query = `
-      SELECT c.id, c.name, c.email, c.city,
-             MAX(o.ordered_at) AS last_order_date,
-             COUNT(o.id) AS order_count,
-             SUM(o.amount) AS total_spend,
-             EXTRACT(DAY FROM NOW() - MAX(o.ordered_at)) AS days_since_last_order
-      FROM customers c
-      LEFT JOIN orders o ON o.customer_id = c.id
-      GROUP BY c.id, c.name, c.email, c.city
-      HAVING ${sqlFilter}
+      SELECT * FROM (
+        SELECT c.id, c.name, c.email, c.city,
+               MAX(o.ordered_at) AS last_order_date,
+               COUNT(o.id) AS order_count,
+               COALESCE(SUM(o.amount), 0) AS total_spend,
+               COALESCE(EXTRACT(DAY FROM NOW() - MAX(o.ordered_at)), 999) AS days_since_last_order
+        FROM customers c
+        LEFT JOIN orders o ON o.customer_id = c.id
+        GROUP BY c.id, c.name, c.email, c.city
+      ) c
+      WHERE ${sqlFilter}
     `;
 
     const { rows } = await pool.query(query);
@@ -49,6 +51,7 @@ router.post('/preview', async (req, res) => {
       customers: rows, // Send preview of matching customers
     });
   } catch (err) {
+    console.error('*** DETAILED ERROR IN POST /api/segments/preview ***');
     console.error(err);
     res.status(500).json({ error: 'Failed to preview segment' });
   }
