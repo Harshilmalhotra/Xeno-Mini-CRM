@@ -31,9 +31,9 @@ router.get('/', async (req, res) => {
       })
     );
     res.json(enriched);
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to fetch customers' });
+    res.status(500).json({ error: 'Failed to fetch customers', details: err.message, stack: err.stack });
   }
 });
 

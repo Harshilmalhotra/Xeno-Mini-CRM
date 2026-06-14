@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import { initWebSocket } from './ws/broadcaster';
+import { pool } from './db';
 import customersRouter from './routes/customers';
 import segmentsRouter from './routes/segments';
 import campaignsRouter from './routes/campaigns';
@@ -20,7 +21,14 @@ app.use('/api/segments', segmentsRouter);
 app.use('/api/campaigns', campaignsRouter);
 app.use('/api/receipts', receiptsRouter);
 
-app.get('/api/health', (_, res) => res.json({ ok: true, ts: new Date() }));
+app.get('/api/health', async (_, res) => {
+  try {
+    const dbRes = await pool.query('SELECT NOW()');
+    res.json({ ok: true, ts: new Date(), db: 'connected', dbTime: dbRes.rows[0].now });
+  } catch (err: any) {
+    res.status(500).json({ ok: false, ts: new Date(), db: 'error', error: err.message, stack: err.stack });
+  }
+});
 
 initWebSocket(server);
 
