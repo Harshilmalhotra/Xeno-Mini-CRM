@@ -12,7 +12,7 @@ Live Application:
 https://xeno-autopilot.vercel.app/
 
 Walkthrough Video:
-https://youtu.be/1u
+https://youtu.be/mil5SLICyoY
 
 Source Code:
 https://github.com/Harshilmalhotra/Xeno-Mini-CRM
