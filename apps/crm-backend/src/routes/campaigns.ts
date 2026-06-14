@@ -43,6 +43,33 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/campaigns/opportunities
+router.get('/opportunities', async (req, res) => {
+  try {
+    const opportunities = await findOpportunities();
+    res.json(opportunities);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch opportunities' });
+  }
+});
+
+// POST /api/campaigns/plan
+router.post('/plan', async (req, res) => {
+  const { goal } = req.body;
+  if (!goal) {
+    res.status(400).json({ error: 'Missing goal in request body' });
+    return;
+  }
+  try {
+    const plan = await generateCampaignPlan(goal);
+    res.json(plan);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to generate campaign plan' });
+  }
+});
+
 // GET /api/campaigns/:id
 router.get('/:id', async (req, res) => {
   const { id } = req.params;

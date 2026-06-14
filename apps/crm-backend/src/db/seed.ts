@@ -92,7 +92,7 @@ async function seed() {
   const schemaPath = path.join(__dirname, 'schema.sql');
   const schema = fs.readFileSync(schemaPath, 'utf8');
   await pool.query(`
-    DROP TABLE IF EXISTS campaign_debriefs, campaign_messages, campaigns, segments, orders, customers, processed_event_ids CASCADE;
+    DROP TABLE IF EXISTS customer_twins, processed_event_ids, campaign_debriefs, campaign_messages, campaigns, segments, orders, customers CASCADE;
   `);
   await pool.query(schema);
 

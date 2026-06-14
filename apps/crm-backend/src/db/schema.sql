@@ -42,6 +42,10 @@ CREATE TABLE campaigns (
   status        TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','running','completed','failed')),
   goal          TEXT NOT NULL,
   sent_at       TIMESTAMPTZ,
+  is_ab_test    BOOLEAN DEFAULT FALSE,
+  variant_a_offer TEXT,
+  variant_b_offer TEXT,
+  attributed_revenue NUMERIC(10,2) DEFAULT 0.00,
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -55,6 +59,8 @@ CREATE TABLE campaign_messages (
                 CHECK (status IN ('pending','sent','delivered','failed','opened','clicked','converted')),
   event_log     JSONB NOT NULL DEFAULT '[]',
   external_id   TEXT UNIQUE,
+  ab_variant    TEXT CHECK (ab_variant IN ('A', 'B')),
+  attributed_revenue NUMERIC(10,2) DEFAULT 0.00,
   created_at    TIMESTAMPTZ DEFAULT NOW(),
   updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
@@ -69,6 +75,13 @@ CREATE TABLE campaign_debriefs (
   recommendation TEXT NOT NULL,
   best_send_time TEXT,
   created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Customer Digital Twin Summary Cache
+CREATE TABLE customer_twins (
+  customer_id   UUID PRIMARY KEY REFERENCES customers(id) ON DELETE CASCADE,
+  summary       TEXT NOT NULL,
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Idempotency event tracking

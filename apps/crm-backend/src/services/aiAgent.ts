@@ -62,6 +62,7 @@ Columns available:
 Scale context:
 - Customer order amounts range from ₹180 to ₹2400.
 - Lifetime total spend of customers ranges from ₹180 to ₹15,000.
+- Loyalty Tiers: Bronze (total_spend <= 2000), Silver (total_spend BETWEEN 2001 AND 5000), Gold (total_spend BETWEEN 5001 AND 10000), Platinum (total_spend > 10000).
 - A "low spend" segment is typically total_spend < 1000 or total_spend < 1500.
 - A "high spend" segment is typically total_spend > 5000.
 

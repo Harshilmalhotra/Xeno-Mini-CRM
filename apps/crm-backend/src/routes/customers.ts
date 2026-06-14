@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { pool } from '../db';
 import { computeChurnScore } from '../services/churnScorer';
+import { getCustomerTwinSummary } from '../services/customerTwin';
+import { getNextBestAction } from '../services/nextBestAction';
 
 const router = Router();
 
@@ -50,6 +52,12 @@ router.get('/:id', async (req, res) => {
       'SELECT id, product_name, category, amount, ordered_at FROM orders WHERE customer_id = $1 ORDER BY ordered_at DESC',
       [id]
     );
+
+    // Dynamic AI insights
+    const [digitalTwin, nextBestAction] = await Promise.all([
+      getCustomerTwinSummary(id),
+      getNextBestAction(id),
+    ]);
     
     res.json({
       ...customer,
@@ -61,6 +69,8 @@ router.get('/:id', async (req, res) => {
       topProduct: churn.topProduct,
       lastOrderDate: churn.lastOrderDate,
       orders,
+      digitalTwin,
+      nextBestAction,
     });
   } catch (err) {
     console.error(err);
