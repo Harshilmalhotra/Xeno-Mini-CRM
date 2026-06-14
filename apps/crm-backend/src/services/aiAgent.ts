@@ -59,6 +59,12 @@ Columns available:
 - total_spend (NUMERIC)
 - days_since_last_order (INTEGER)
 
+Scale context:
+- Customer order amounts range from ₹180 to ₹2400.
+- Lifetime total spend of customers ranges from ₹180 to ₹15,000.
+- A "low spend" segment is typically total_spend < 1000 or total_spend < 1500.
+- A "high spend" segment is typically total_spend > 5000.
+
 Rules:
 - sqlFilter must be a valid PostgreSQL filter that can be placed in a HAVING clause. Use the exact aggregated column names listed above.
 - Do NOT include 'HAVING' word itself, only the condition.
