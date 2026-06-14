@@ -1,5 +1,6 @@
 import React from 'react';
 import { theme } from '../theme';
+import { Clock } from 'lucide-react';
 
 interface AiDebriefCardProps {
   campaignName: string;
@@ -95,7 +96,10 @@ export function AiDebriefCard({ campaignName, debrief, onLaunchFollowUp }: AiDeb
               color: theme.colors.textPrimary,
               fontWeight: theme.typography.weightMedium
             }}>
-              ⏰ {debrief.bestSendTime}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <Clock size={12} style={{ color: theme.colors.textSecondary }} />
+                <span>{debrief.bestSendTime}</span>
+              </span>
             </span>
           </div>
         )}

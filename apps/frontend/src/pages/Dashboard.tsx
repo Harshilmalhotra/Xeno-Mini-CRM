@@ -8,7 +8,7 @@ import { LiveCampaignTracker } from '../components/LiveCampaignTracker';
 import { AiDebriefCard } from '../components/AiDebriefCard';
 import { StatCard } from '../components/StatCard';
 import { useSearchParams } from 'react-router-dom';
-import { Target, Crown, Trophy } from 'lucide-react';
+import { Target, Crown, Trophy, Gift, Clock, Radio, Lightbulb, Eye, BarChart2 } from 'lucide-react';
 
 export function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -437,8 +437,17 @@ export function Dashboard() {
           {/* Plan Parameters */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: theme.spacing.lg }}>
             <div>
-              <label style={{ fontSize: theme.typography.sizeBase, fontWeight: 'bold', color: theme.colors.textPrimary, display: 'block', marginBottom: '4px' }}>
-                🎁 Campaign Offer Text
+              <label style={{
+                fontSize: theme.typography.sizeBase,
+                fontWeight: 'bold',
+                color: theme.colors.textPrimary,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginBottom: '4px'
+              }}>
+                <Gift size={16} style={{ color: theme.colors.accent }} />
+                <span>Campaign Offer Text</span>
               </label>
               <textarea
                 value={customOffer}
@@ -462,8 +471,17 @@ export function Dashboard() {
               />
             </div>
             <div>
-              <label style={{ fontSize: theme.typography.sizeBase, fontWeight: 'bold', color: theme.colors.textPrimary, display: 'block', marginBottom: '4px' }}>
-                ⏰ Send Time Scheduling
+              <label style={{
+                fontSize: theme.typography.sizeBase,
+                fontWeight: theme.typography.weightBold,
+                color: theme.colors.textPrimary,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginBottom: '4px'
+              }}>
+                <Clock size={16} style={{ color: theme.colors.accent }} />
+                <span>Send Time Scheduling</span>
               </label>
               <input
                 type="text"
@@ -481,8 +499,17 @@ export function Dashboard() {
               />
             </div>
             <div>
-              <label style={{ fontSize: theme.typography.sizeBase, fontWeight: 'bold', color: theme.colors.textPrimary, display: 'block', marginBottom: '4px' }}>
-                📡 Delivery Channel
+              <label style={{
+                fontSize: theme.typography.sizeBase,
+                fontWeight: 'bold',
+                color: theme.colors.textPrimary,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginBottom: '4px'
+              }}>
+                <Radio size={16} style={{ color: theme.colors.accent }} />
+                <span>Delivery Channel</span>
               </label>
               <select
                 value={customChannel}
@@ -513,8 +540,16 @@ export function Dashboard() {
             flexDirection: 'column',
             gap: theme.spacing.xs
           }}>
-            <h4 style={{ fontSize: theme.typography.sizeSm, fontWeight: 'bold', color: theme.colors.info }}>
-              💡 Explainable AI Reasoning
+            <h4 style={{
+              fontSize: theme.typography.sizeSm,
+              fontWeight: 'bold',
+              color: theme.colors.info,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <Lightbulb size={14} />
+              <span>Explainable AI Reasoning</span>
             </h4>
             <p style={{ fontSize: theme.typography.sizeSm, color: theme.colors.textSecondary }}>
               <strong>Audience reasoning:</strong> {plannedCampaign.audienceReasoning}
@@ -526,8 +561,16 @@ export function Dashboard() {
               <strong>Why {plannedCampaign.recommendedChannel}:</strong> {plannedCampaign.whyChannelExplanation}
             </p>
             <details style={{ marginTop: theme.spacing.xs, fontSize: theme.typography.sizeSm }}>
-              <summary style={{ cursor: 'pointer', color: theme.colors.textSecondary, fontWeight: 'bold' }}>
-                👁 Show AI-generated SQL query filter
+              <summary style={{
+                cursor: 'pointer',
+                color: theme.colors.textSecondary,
+                fontWeight: 'bold',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+                <Eye size={14} />
+                <span>Show AI-generated SQL query filter</span>
               </summary>
               <pre style={{
                 backgroundColor: theme.colors.bgSecondary,
@@ -557,7 +600,10 @@ export function Dashboard() {
                 onChange={(e) => setEnableAbTest(e.target.checked)}
                 style={{ width: '16px', height: '16px' }}
               />
-              📊 Enable AI Experiment (A/B testing split)
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <BarChart2 size={16} style={{ color: theme.colors.accent }} />
+                <span>Enable AI Experiment (A/B testing split)</span>
+              </span>
             </label>
             {enableAbTest && (
               <div style={{

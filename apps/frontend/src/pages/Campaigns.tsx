@@ -4,7 +4,7 @@ import { api } from '../api/client';
 import { LiveCampaignTracker } from '../components/LiveCampaignTracker';
 import { AiDebriefCard } from '../components/AiDebriefCard';
 import { useNavigate } from 'react-router-dom';
-import { Trophy } from 'lucide-react';
+import { Trophy, BarChart2 } from 'lucide-react';
 
 export function Campaigns() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -191,8 +191,16 @@ export function Campaigns() {
                                   flexDirection: 'column',
                                   gap: theme.spacing.sm
                                 }}>
-                                  <h4 style={{ fontSize: theme.typography.sizeSm, fontWeight: 'bold', color: theme.colors.textPrimary }}>
-                                    📊 A/B Experiment Performance Results
+                                  <h4 style={{
+                                    fontSize: theme.typography.sizeSm,
+                                    fontWeight: 'bold',
+                                    color: theme.colors.textPrimary,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                  }}>
+                                    <BarChart2 size={16} style={{ color: theme.colors.accent }} />
+                                    <span>A/B Experiment Performance Results</span>
                                   </h4>
                                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: theme.spacing.lg, marginTop: theme.spacing.sm }}>
                                     <div style={{ backgroundColor: theme.colors.bgSecondary, padding: theme.spacing.md, borderRadius: theme.radii.md }}>

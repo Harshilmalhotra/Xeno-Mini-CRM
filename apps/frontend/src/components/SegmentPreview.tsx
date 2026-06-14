@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Eye } from 'lucide-react';
 import { theme } from '../theme';
 import { api } from '../api/client';
 import { ChurnRingBadge } from './ChurnRingBadge';
@@ -172,7 +173,10 @@ export function SegmentPreview({ previewData, nlQuery, onCampaignCreated }: Segm
             fontWeight: theme.typography.weightMedium
           }}
         >
-          <span>👁 {isSqlCollapsed ? 'Show' : 'Hide'} AI-generated SQL query filter</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <Eye size={16} />
+            <span>{isSqlCollapsed ? 'Show' : 'Hide'} AI-generated SQL query filter</span>
+          </span>
           <span>{isSqlCollapsed ? '▼' : '▲'}</span>
         </button>
         {!isSqlCollapsed && (
