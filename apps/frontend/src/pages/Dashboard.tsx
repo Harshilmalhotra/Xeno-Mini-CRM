@@ -41,6 +41,10 @@ export function Dashboard() {
   const [enableAbTest, setEnableAbTest] = useState(false);
   const [variantAOffer, setVariantAOffer] = useState('');
   const [variantBOffer, setVariantBOffer] = useState('');
+  const [customChannel, setCustomChannel] = useState<'whatsapp' | 'sms' | 'email' | 'rcs'>('whatsapp');
+  const [customOffer, setCustomOffer] = useState('');
+  const [customSendTime, setCustomSendTime] = useState('');
+  const [customCampaignName, setCustomCampaignName] = useState('');
 
   const timelineSteps = [
     'Analyzing customer behavior & segments...',
@@ -146,6 +150,10 @@ export function Dashboard() {
     try {
       const plan = await api.post<any>('/api/campaigns/plan', { goal });
       setPlannedCampaign(plan);
+      setCustomChannel(plan.recommendedChannel);
+      setCustomOffer(plan.recommendedOffer);
+      setCustomSendTime(plan.recommendedSendTime);
+      setCustomCampaignName(plan.recommendedSegment);
       setVariantAOffer(plan.recommendedOffer);
       setVariantBOffer('Free Coffee Upgrade'); // Default secondary variant
       setTimeout(() => {
@@ -173,7 +181,7 @@ export function Dashboard() {
     try {
       // 1. Save AI-generated segment
       const segment = await api.post<any>('/api/segments', {
-        name: plannedCampaign.recommendedSegment,
+        name: customCampaignName || plannedCampaign.recommendedSegment,
         nlQuery: plannedCampaign.goal,
         sqlFilter: plannedCampaign.generatedSegmentQuery,
         description: plannedCampaign.audienceReasoning,
@@ -182,10 +190,10 @@ export function Dashboard() {
 
       // 2. Create campaign draft
       const campaign = await api.post<any>('/api/campaigns', {
-        name: plannedCampaign.recommendedSegment + ' Autopilot',
+        name: (customCampaignName || plannedCampaign.recommendedSegment) + ' Autopilot',
         segmentId: segment.id,
-        channel: plannedCampaign.recommendedChannel,
-        goal: plannedCampaign.goal,
+        channel: customChannel,
+        goal: customOffer || plannedCampaign.recommendedOffer,
         isAbTest: enableAbTest,
         variantAOffer: enableAbTest ? variantAOffer : null,
         variantBOffer: enableAbTest ? variantBOffer : null
@@ -373,9 +381,26 @@ export function Dashboard() {
             <span style={{ fontSize: '11px', textTransform: 'uppercase', color: theme.colors.accent, fontWeight: 'bold' }}>
               Autopilot Campaign Plan
             </span>
-            <h2 style={{ fontSize: theme.typography.sizeLg, fontWeight: theme.typography.weightBold, marginTop: '2px' }}>
-              Recommended: {plannedCampaign.recommendedSegment}
-            </h2>
+            <div style={{ marginTop: theme.spacing.sm }}>
+              <label style={{ fontSize: theme.typography.sizeSm, color: theme.colors.textSecondary, fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
+                Campaign Name
+              </label>
+              <input
+                type="text"
+                value={customCampaignName}
+                onChange={(e) => setCustomCampaignName(e.target.value)}
+                style={{
+                  width: '100%',
+                  fontSize: theme.typography.sizeBase,
+                  fontWeight: theme.typography.weightBold,
+                  padding: theme.spacing.sm,
+                  borderRadius: theme.radii.sm,
+                  border: `1px solid ${theme.colors.borderDefault}`,
+                  color: theme.colors.textPrimary,
+                  backgroundColor: theme.colors.bgPrimary
+                }}
+              />
+            </div>
           </div>
 
           {/* Forecast Box */}
@@ -412,38 +437,71 @@ export function Dashboard() {
           {/* Plan Parameters */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: theme.spacing.lg }}>
             <div>
-              <h4 style={{ fontSize: theme.typography.sizeBase, fontWeight: 'bold', color: theme.colors.textPrimary }}>
-                Offer Recommendation
-              </h4>
-              <p style={{ fontSize: theme.typography.sizeSm, color: theme.colors.textSecondary, marginTop: '2px' }}>
-                🎁 {plannedCampaign.recommendedOffer}
-              </p>
+              <label style={{ fontSize: theme.typography.sizeBase, fontWeight: 'bold', color: theme.colors.textPrimary, display: 'block', marginBottom: '4px' }}>
+                🎁 Campaign Offer Text
+              </label>
+              <textarea
+                value={customOffer}
+                onChange={(e) => {
+                  setCustomOffer(e.target.value);
+                  if (!enableAbTest) {
+                    setVariantAOffer(e.target.value);
+                  }
+                }}
+                rows={2}
+                style={{
+                  width: '100%',
+                  fontSize: theme.typography.sizeSm,
+                  padding: theme.spacing.sm,
+                  borderRadius: theme.radii.sm,
+                  border: `1px solid ${theme.colors.borderDefault}`,
+                  color: theme.colors.textSecondary,
+                  resize: 'vertical',
+                  backgroundColor: theme.colors.bgPrimary
+                }}
+              />
             </div>
             <div>
-              <h4 style={{ fontSize: theme.typography.sizeBase, fontWeight: 'bold', color: theme.colors.textPrimary }}>
-                Optimal Send Time
-              </h4>
-              <p style={{ fontSize: theme.typography.sizeSm, color: theme.colors.textSecondary, marginTop: '2px' }}>
-                ⏰ {plannedCampaign.recommendedSendTime}
-              </p>
+              <label style={{ fontSize: theme.typography.sizeBase, fontWeight: 'bold', color: theme.colors.textPrimary, display: 'block', marginBottom: '4px' }}>
+                ⏰ Send Time Scheduling
+              </label>
+              <input
+                type="text"
+                value={customSendTime}
+                onChange={(e) => setCustomSendTime(e.target.value)}
+                style={{
+                  width: '100%',
+                  fontSize: theme.typography.sizeSm,
+                  padding: theme.spacing.sm,
+                  borderRadius: theme.radii.sm,
+                  border: `1px solid ${theme.colors.borderDefault}`,
+                  color: theme.colors.textSecondary,
+                  backgroundColor: theme.colors.bgPrimary
+                }}
+              />
             </div>
             <div>
-              <h4 style={{ fontSize: theme.typography.sizeBase, fontWeight: 'bold', color: theme.colors.textPrimary }}>
-                Delivery Channel
-              </h4>
-              <span style={{
-                backgroundColor: theme.colors.accentLight,
-                color: theme.colors.accentDark,
-                padding: '2px 8px',
-                borderRadius: theme.radii.full,
-                fontSize: '11px',
-                fontWeight: 'bold',
-                textTransform: 'uppercase',
-                display: 'inline-block',
-                marginTop: '4px'
-              }}>
-                {plannedCampaign.recommendedChannel}
-              </span>
+              <label style={{ fontSize: theme.typography.sizeBase, fontWeight: 'bold', color: theme.colors.textPrimary, display: 'block', marginBottom: '4px' }}>
+                📡 Delivery Channel
+              </label>
+              <select
+                value={customChannel}
+                onChange={(e) => setCustomChannel(e.target.value as any)}
+                style={{
+                  width: '100%',
+                  fontSize: theme.typography.sizeSm,
+                  padding: theme.spacing.sm,
+                  borderRadius: theme.radii.sm,
+                  border: `1px solid ${theme.colors.borderDefault}`,
+                  color: theme.colors.textSecondary,
+                  backgroundColor: theme.colors.bgPrimary
+                }}
+              >
+                <option value="whatsapp">WhatsApp</option>
+                <option value="sms">SMS</option>
+                <option value="email">Email</option>
+                <option value="rcs">RCS</option>
+              </select>
             </div>
           </div>
 
