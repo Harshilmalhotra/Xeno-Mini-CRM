@@ -56,18 +56,38 @@ export async function launch(campaignId: string): Promise<void> {
       }
     }
 
-    // 3. Call AI agent to generate personalized messages in bulk batches
-    const personalized = await aiAgent.generatePersonalisedMessages(
-      campaign.goal,
-      campaign.channel,
-      customersWithHistory
-    );
+    // 3. Personalize messages (supporting A/B testing splits)
+    const msgMap = new Map<string, { message: string; variant: 'A' | 'B' | null }>();
 
-    // Map customer ID to message text for quick access during queue loop
-    const msgMap = new Map<string, string>();
-    personalized.forEach((item) => {
-      msgMap.set(item.customerId, item.message);
-    });
+    if (campaign.is_ab_test) {
+      const groupA = customersWithHistory.filter((_, idx) => idx % 2 === 0);
+      const groupB = customersWithHistory.filter((_, idx) => idx % 2 !== 0);
+
+      const [personalizedA, personalizedB] = await Promise.all([
+        groupA.length > 0
+          ? aiAgent.generatePersonalisedMessages(`${campaign.goal} (Offer: ${campaign.variant_a_offer})`, campaign.channel, groupA)
+          : Promise.resolve([]),
+        groupB.length > 0
+          ? aiAgent.generatePersonalisedMessages(`${campaign.goal} (Offer: ${campaign.variant_b_offer})`, campaign.channel, groupB)
+          : Promise.resolve([]),
+      ]);
+
+      personalizedA.forEach((item) => {
+        msgMap.set(item.customerId, { message: item.message, variant: 'A' });
+      });
+      personalizedB.forEach((item) => {
+        msgMap.set(item.customerId, { message: item.message, variant: 'B' });
+      });
+    } else {
+      const personalized = await aiAgent.generatePersonalisedMessages(
+        campaign.goal,
+        campaign.channel,
+        customersWithHistory
+      );
+      personalized.forEach((item) => {
+        msgMap.set(item.customerId, { message: item.message, variant: null });
+      });
+    }
 
     // 4. Send messages to simulator
     const stubUrl = process.env.CHANNEL_STUB_URL || 'http://localhost:4001';
@@ -80,15 +100,17 @@ export async function launch(campaignId: string): Promise<void> {
     });
 
     for (const customer of customersWithHistory) {
-      const messageText = msgMap.get(customer.id) || `Hi ${customer.name}, check out Roastery Co.!`;
+      const messageInfo = msgMap.get(customer.id) || { message: `Hi ${customer.name}, check out Roastery Co.!`, variant: null };
+      const messageText = messageInfo.message;
+      const abVariant = messageInfo.variant;
       const externalId = uuidv4();
       const recipient = campaign.channel === 'email' ? customer.email : customer.phone;
 
       // Insert message into database
       const { rows: insertRows } = await pool.query(
-        `INSERT INTO campaign_messages (campaign_id, customer_id, message_text, status, external_id, event_log)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-        [campaignId, customer.id, messageText, 'sent', externalId, JSON.stringify([{ event: 'sent', timestamp: new Date().toISOString() }])]
+        `INSERT INTO campaign_messages (campaign_id, customer_id, message_text, status, external_id, ab_variant, event_log)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+        [campaignId, customer.id, messageText, 'sent', externalId, abVariant, JSON.stringify([{ event: 'sent', timestamp: new Date().toISOString() }])]
       );
       const messageId = insertRows[0].id;
 

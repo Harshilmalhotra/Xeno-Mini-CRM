@@ -3,6 +3,8 @@ import { pool } from '../db';
 import * as campaignRunner from '../services/campaignRunner';
 import * as aiAgent from '../services/aiAgent';
 import { broadcast } from '../ws/broadcaster';
+import { generateCampaignPlan } from '../services/campaignPlanner';
+import { findOpportunities } from '../services/opportunityDiscovery';
 
 const router = Router();
 
@@ -115,16 +117,16 @@ router.get('/:id', async (req, res) => {
 
 // POST /api/campaigns
 router.post('/', async (req, res) => {
-  const { name, segmentId, channel, goal } = req.body;
+  const { name, segmentId, channel, goal, isAbTest, variantAOffer, variantBOffer } = req.body;
   if (!name || !segmentId || !channel || !goal) {
     res.status(400).json({ error: 'Missing required parameters' });
     return;
   }
   try {
     const { rows } = await pool.query(
-      `INSERT INTO campaigns (name, segment_id, channel, goal, status)
-       VALUES ($1, $2, $3, $4, 'draft') RETURNING *`,
-      [name, segmentId, channel, goal]
+      `INSERT INTO campaigns (name, segment_id, channel, goal, status, is_ab_test, variant_a_offer, variant_b_offer)
+       VALUES ($1, $2, $3, $4, 'draft', $5, $6, $7) RETURNING *`,
+      [name, segmentId, channel, goal, isAbTest || false, variantAOffer || null, variantBOffer || null]
     );
     res.status(201).json(rows[0]);
   } catch (err) {

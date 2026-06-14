@@ -62,14 +62,33 @@ router.post('/', async (req, res) => {
       return;
     }
 
-    // 4. Update status and event log
+    // 4. Update status, event log, and attribute revenue if converted
     const newLogItem = { event, timestamp, eventId };
+    let revenue = 0.00;
+    
+    if (event === 'converted') {
+      const { rows: orderAvgRows } = await pool.query(
+        'SELECT COALESCE(AVG(amount), 450) as avg_amount FROM orders WHERE customer_id = $1',
+        [message.customer_id]
+      );
+      revenue = Math.round(parseFloat(orderAvgRows[0].avg_amount || '450'));
+    }
+
     await pool.query(
       `UPDATE campaign_messages
-       SET status = $1, event_log = event_log || $2::jsonb, updated_at = NOW()
-       WHERE id = $3`,
-      [event, JSON.stringify([newLogItem]), message.id]
+       SET status = $1, event_log = event_log || $2::jsonb, attributed_revenue = $3, updated_at = NOW()
+       WHERE id = $4`,
+      [event, JSON.stringify([newLogItem]), revenue, message.id]
     );
+
+    if (revenue > 0) {
+      await pool.query(
+        `UPDATE campaigns
+         SET attributed_revenue = attributed_revenue + $1
+         WHERE id = $2`,
+        [revenue, message.campaign_id]
+      );
+    }
 
     // 5. Query updated stats for the broadcast
     const statsQuery = `
