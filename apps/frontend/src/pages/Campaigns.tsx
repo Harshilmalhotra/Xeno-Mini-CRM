@@ -77,9 +77,9 @@ export function Campaigns() {
                 <th style={{ padding: theme.spacing.md }}>Channel</th>
                 <th style={{ padding: theme.spacing.md }}>Segment</th>
                 <th style={{ padding: theme.spacing.md }}>Sent</th>
-                <th style={{ padding: theme.spacing.md }}>Delivered</th>
-                <th style={{ padding: theme.spacing.md }}>Opened</th>
                 <th style={{ padding: theme.spacing.md }}>Clicked</th>
+                <th style={{ padding: theme.spacing.md }}>Conversion</th>
+                <th style={{ padding: theme.spacing.md }}>Revenue</th>
                 <th style={{ padding: theme.spacing.md }}>Status</th>
                 <th style={{ padding: theme.spacing.md }}>Date</th>
               </tr>
@@ -96,9 +96,8 @@ export function Campaigns() {
                   const statusColors = getStatusStyle(c.status);
                   const isExpanded = expandedId === c.id;
 
-                  const delPercent = c.sent_count > 0 ? Math.round((c.delivered_count / c.sent_count) * 100) : 0;
-                  const openPercent = c.sent_count > 0 ? Math.round((c.opened_count / c.sent_count) * 100) : 0;
                   const clickPercent = c.sent_count > 0 ? Math.round((c.clicked_count / c.sent_count) * 100) : 0;
+                  const convPercent = c.sent_count > 0 ? Math.round((c.converted_count / c.sent_count) * 100) : 0;
 
                   return (
                     <React.Fragment key={c.id}>
@@ -120,12 +119,16 @@ export function Campaigns() {
                         }}
                       >
                         <td style={{ padding: theme.spacing.md, fontWeight: theme.typography.weightBold }}>{c.name}</td>
-                        <td style={{ padding: theme.spacing.md, textTransform: 'uppercase', fontSize: theme.typography.sizeSm }}>{c.channel}</td>
+                        <td style={{ padding: theme.spacing.md, textTransform: 'uppercase', fontSize: theme.typography.sizeSm }}>
+                          {c.channel} {c.is_ab_test ? ' (A/B)' : ''}
+                        </td>
                         <td style={{ padding: theme.spacing.md }}>{c.segment_name || 'Lapsed Customers'}</td>
                         <td style={{ padding: theme.spacing.md, fontFamily: theme.typography.fontMono }}>{c.sent_count}</td>
-                        <td style={{ padding: theme.spacing.md, fontFamily: theme.typography.fontMono }}>{delPercent}%</td>
-                        <td style={{ padding: theme.spacing.md, fontFamily: theme.typography.fontMono }}>{openPercent}%</td>
                         <td style={{ padding: theme.spacing.md, fontFamily: theme.typography.fontMono }}>{clickPercent}%</td>
+                        <td style={{ padding: theme.spacing.md, fontFamily: theme.typography.fontMono }}>{convPercent}%</td>
+                        <td style={{ padding: theme.spacing.md, fontFamily: theme.typography.fontMono, fontWeight: 'bold', color: theme.colors.accent }}>
+                          ₹{Math.round(c.attributed_revenue || 0)}
+                        </td>
                         <td style={{ padding: theme.spacing.md }}>
                           <span style={{
                             backgroundColor: statusColors.bg,
@@ -174,6 +177,56 @@ export function Campaigns() {
                                 }}
                                 totalCustomers={c.sent_count}
                               />
+
+                              {/* A/B Test Results Detail Card */}
+                              {c.debrief && c.debrief.ab_test_results && (
+                                <div style={{
+                                  backgroundColor: theme.colors.bgPrimary,
+                                  border: `0.5px solid ${theme.colors.borderDefault}`,
+                                  borderRadius: theme.radii.lg,
+                                  padding: theme.spacing.xl,
+                                  boxShadow: theme.shadows.sm,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: theme.spacing.sm
+                                }}>
+                                  <h4 style={{ fontSize: theme.typography.sizeSm, fontWeight: 'bold', color: theme.colors.textPrimary }}>
+                                    📊 A/B Experiment Performance Results
+                                  </h4>
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: theme.spacing.lg, marginTop: theme.spacing.sm }}>
+                                    <div style={{ backgroundColor: theme.colors.bgSecondary, padding: theme.spacing.md, borderRadius: theme.radii.md }}>
+                                      <h5 style={{ fontSize: theme.typography.sizeSm, fontWeight: 'bold', color: theme.colors.textPrimary }}>Variant A</h5>
+                                      <p style={{ fontSize: '12px', color: theme.colors.textSecondary, marginTop: '2px' }}>
+                                        Sent: {c.debrief.ab_test_results.variantASent} | Converted: {c.debrief.ab_test_results.variantAConverted}
+                                      </p>
+                                      <div style={{ fontSize: theme.typography.sizeSm, fontWeight: 'bold', color: theme.colors.textPrimary, marginTop: '4px' }}>
+                                        Conversion Rate: {c.debrief.ab_test_results.variantAConversionRate}%
+                                      </div>
+                                    </div>
+                                    <div style={{ backgroundColor: theme.colors.bgSecondary, padding: theme.spacing.md, borderRadius: theme.radii.md }}>
+                                      <h5 style={{ fontSize: theme.typography.sizeSm, fontWeight: 'bold', color: theme.colors.textPrimary }}>Variant B</h5>
+                                      <p style={{ fontSize: '12px', color: theme.colors.textSecondary, marginTop: '2px' }}>
+                                        Sent: {c.debrief.ab_test_results.variantBSent} | Converted: {c.debrief.ab_test_results.variantBConverted}
+                                      </p>
+                                      <div style={{ fontSize: theme.typography.sizeSm, fontWeight: 'bold', color: theme.colors.textPrimary, marginTop: '4px' }}>
+                                        Conversion Rate: {c.debrief.ab_test_results.variantBConversionRate}%
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div style={{
+                                    backgroundColor: theme.colors.successLight,
+                                    color: theme.colors.success,
+                                    padding: theme.spacing.md,
+                                    borderRadius: theme.radii.md,
+                                    fontWeight: 'bold',
+                                    fontSize: theme.typography.sizeSm,
+                                    marginTop: theme.spacing.sm,
+                                    textAlign: 'center'
+                                  }}>
+                                    🏆 Winner: {c.debrief.ab_test_results.winner} {c.debrief.ab_test_results.improvementPercent > 0 ? `(outperformed Version A by +${c.debrief.ab_test_results.improvementPercent}%)` : ''}
+                                  </div>
+                                </div>
+                              )}
                               
                               {c.debrief && (
                                 <AiDebriefCard

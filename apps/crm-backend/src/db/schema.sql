@@ -74,6 +74,7 @@ CREATE TABLE campaign_debriefs (
   click_no_buy_ids UUID[],
   recommendation TEXT NOT NULL,
   best_send_time TEXT,
+  ab_test_results JSONB,
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 

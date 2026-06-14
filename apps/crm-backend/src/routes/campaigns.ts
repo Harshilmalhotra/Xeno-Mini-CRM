@@ -289,15 +289,16 @@ router.post('/:id/complete', async (req, res) => {
 
     // 5. Save debrief to DB
     await pool.query(
-      `INSERT INTO campaign_debriefs (campaign_id, summary, best_channel, click_no_buy_ids, recommendation, best_send_time)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO campaign_debriefs (campaign_id, summary, best_channel, click_no_buy_ids, recommendation, best_send_time, ab_test_results)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (campaign_id) DO UPDATE
        SET summary = EXCLUDED.summary,
            best_channel = EXCLUDED.best_channel,
            click_no_buy_ids = EXCLUDED.click_no_buy_ids,
            recommendation = EXCLUDED.recommendation,
-           best_send_time = EXCLUDED.best_send_time`,
-      [id, debrief.summary, debrief.bestChannel, clickNoBuyIds, debrief.recommendation, debrief.bestSendTime]
+           best_send_time = EXCLUDED.best_send_time,
+           ab_test_results = EXCLUDED.ab_test_results`,
+      [id, debrief.summary, debrief.bestChannel, clickNoBuyIds, debrief.recommendation, debrief.bestSendTime, JSON.stringify(abTestResults)]
     );
 
     // 6. Broadcast completed status to WebSockets

@@ -3,6 +3,18 @@ import { theme } from '../theme';
 import { api } from '../api/client';
 import { ChurnRingBadge } from '../components/ChurnRingBadge';
 
+const getLoyaltyTierInfo = (totalSpend: number) => {
+  if (totalSpend > 10000) {
+    return { tier: 'Platinum', color: '#7F77DD', progress: 100, nextGoal: null };
+  } else if (totalSpend > 5000) {
+    return { tier: 'Gold', color: '#BA7517', progress: Math.min(100, Math.round(((totalSpend - 5000) / 5000) * 100)), nextGoal: 10000 };
+  } else if (totalSpend > 2000) {
+    return { tier: 'Silver', color: '#185FA5', progress: Math.min(100, Math.round(((totalSpend - 2000) / 3000) * 100)), nextGoal: 5000 };
+  } else {
+    return { tier: 'Bronze', color: '#C4622D', progress: Math.min(100, Math.round((totalSpend / 2000) * 100)), nextGoal: 2000 };
+  }
+};
+
 export function Customers() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
@@ -14,6 +26,8 @@ export function Customers() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedHistory, setSelectedHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [digitalTwin, setDigitalTwin] = useState<string | null>(null);
+  const [nextAction, setNextAction] = useState<any | null>(null);
 
   const loadCustomers = async () => {
     try {
@@ -60,14 +74,20 @@ export function Customers() {
     if (expandedId === customerId) {
       setExpandedId(null);
       setSelectedHistory([]);
+      setDigitalTwin(null);
+      setNextAction(null);
       return;
     }
 
     setExpandedId(customerId);
     setLoadingHistory(true);
+    setDigitalTwin(null);
+    setNextAction(null);
     try {
       const detail = await api.get<any>(`/api/customers/${customerId}`);
       setSelectedHistory(detail.orders || []);
+      setDigitalTwin(detail.digitalTwin || null);
+      setNextAction(detail.nextBestAction || null);
     } catch (err) {
       console.error('Failed to load history:', err);
     } finally {
@@ -193,6 +213,8 @@ export function Customers() {
             const initials = c.name.split(' ').map((n: string) => n[0]).join('');
             const isExpanded = expandedId === c.id;
 
+            const loyaltyInfo = getLoyaltyTierInfo(c.totalSpend);
+
             return (
               <div
                 key={c.id}
@@ -231,9 +253,22 @@ export function Customers() {
                     {initials}
                   </div>
                   <div>
-                    <h3 style={{ fontSize: theme.typography.sizeMd, fontWeight: theme.typography.weightBold, color: theme.colors.textPrimary }}>
-                      {c.name}
-                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs, flexWrap: 'wrap' }}>
+                      <h3 style={{ fontSize: theme.typography.sizeMd, fontWeight: theme.typography.weightBold, color: theme.colors.textPrimary }}>
+                        {c.name}
+                      </h3>
+                      <span style={{
+                        backgroundColor: loyaltyInfo.color + '18',
+                        color: loyaltyInfo.color,
+                        padding: '1px 6px',
+                        borderRadius: theme.radii.sm,
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase'
+                      }}>
+                        {loyaltyInfo.tier}
+                      </span>
+                    </div>
                     <p style={{ fontSize: theme.typography.sizeSm, color: theme.colors.textSecondary }}>
                       📍 {c.city}
                     </p>
@@ -316,44 +351,98 @@ export function Customers() {
                     backgroundColor: theme.colors.bgSecondary,
                     borderRadius: theme.radii.md,
                     padding: theme.spacing.md,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: theme.spacing.sm
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: theme.spacing.md
                   }}>
-                    <h4 style={{ fontSize: theme.typography.sizeSm, fontWeight: theme.typography.weightBold, color: theme.colors.textPrimary }}>
-                      Recent orders timeline
-                    </h4>
-                    {loadingHistory ? (
-                      <div style={{ fontSize: theme.typography.sizeSm, color: theme.colors.textTertiary, fontStyle: 'italic' }}>
-                        Loading timeline...
-                      </div>
-                    ) : selectedHistory.length === 0 ? (
-                      <div style={{ fontSize: theme.typography.sizeSm, color: theme.colors.textTertiary, fontStyle: 'italic' }}>
-                        No orders recorded.
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.xs, borderLeft: `2px solid ${theme.colors.borderDefault}`, paddingLeft: theme.spacing.md, marginLeft: '4px' }}>
-                        {selectedHistory.slice(0, 5).map((o: any) => (
-                          <div key={o.id} style={{ position: 'relative', fontSize: '12px', color: theme.colors.textSecondary, marginBottom: theme.spacing.xs }}>
-                            <div style={{
-                              position: 'absolute',
-                              left: '-14px',
-                              top: '4px',
-                              width: '6px',
-                              height: '6px',
-                              borderRadius: '50%',
-                              backgroundColor: theme.colors.accent
-                            }} />
-                            <div style={{ fontWeight: theme.typography.weightBold, color: theme.colors.textPrimary }}>
-                              {o.product_name}
-                            </div>
-                            <div>
-                              ₹{Math.round(o.amount)} — {new Date(o.ordered_at).toLocaleDateString()}
-                            </div>
+                    {/* Left Column: Orders & Loyalty progress */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
+                      {/* Loyalty Tier Progress */}
+                      <div style={{ borderBottom: `1px solid ${theme.colors.borderDefault}`, paddingBottom: theme.spacing.xs }}>
+                        <h4 style={{ fontSize: theme.typography.sizeSm, fontWeight: theme.typography.weightBold, color: theme.colors.textPrimary }}>
+                          Loyalty Tier Progress
+                        </h4>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: theme.colors.textSecondary, marginTop: '2px' }}>
+                          <span>{loyaltyInfo.tier}</span>
+                          <span>
+                            {loyaltyInfo.nextGoal ? `₹${c.totalSpend} / ₹${loyaltyInfo.nextGoal}` : `₹${c.totalSpend} (Max Tier)`}
+                          </span>
+                        </div>
+                        {loyaltyInfo.nextGoal && (
+                          <div style={{ width: '100%', height: '6px', backgroundColor: theme.colors.bgTertiary, borderRadius: theme.radii.full, overflow: 'hidden', marginTop: '4px' }}>
+                            <div style={{ width: `${loyaltyInfo.progress}%`, height: '100%', backgroundColor: loyaltyInfo.color, borderRadius: theme.radii.full }} />
                           </div>
-                        ))}
+                        )}
                       </div>
-                    )}
+
+                      <h4 style={{ fontSize: theme.typography.sizeSm, fontWeight: theme.typography.weightBold, color: theme.colors.textPrimary }}>
+                        Recent orders timeline
+                      </h4>
+                      {loadingHistory ? (
+                        <div style={{ fontSize: theme.typography.sizeSm, color: theme.colors.textTertiary, fontStyle: 'italic' }}>
+                          Loading timeline...
+                        </div>
+                      ) : selectedHistory.length === 0 ? (
+                        <div style={{ fontSize: theme.typography.sizeSm, color: theme.colors.textTertiary, fontStyle: 'italic' }}>
+                          No orders recorded.
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.xs, borderLeft: `2px solid ${theme.colors.borderDefault}`, paddingLeft: theme.spacing.md, marginLeft: '4px' }}>
+                          {selectedHistory.slice(0, 5).map((o: any) => (
+                            <div key={o.id} style={{ position: 'relative', fontSize: '12px', color: theme.colors.textSecondary, marginBottom: theme.spacing.xs }}>
+                              <div style={{
+                                position: 'absolute',
+                                left: '-14px',
+                                top: '4px',
+                                width: '6px',
+                                height: '6px',
+                                borderRadius: '50%',
+                                backgroundColor: theme.colors.accent
+                              }} />
+                              <div style={{ fontWeight: theme.typography.weightBold, color: theme.colors.textPrimary }}>
+                                {o.product_name}
+                              </div>
+                              <div>
+                                ₹{Math.round(o.amount)} — {new Date(o.ordered_at).toLocaleDateString()}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right Column: AI Insights */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
+                      <h4 style={{ fontSize: theme.typography.sizeSm, fontWeight: theme.typography.weightBold, color: theme.colors.textPrimary }}>
+                        ✨ AI Autopilot Insights
+                      </h4>
+                      {/* Digital Twin Profile */}
+                      <div style={{ backgroundColor: theme.colors.bgPrimary, borderRadius: theme.radii.md, padding: theme.spacing.md, border: `0.5px solid ${theme.colors.borderDefault}` }}>
+                        <span style={{ fontSize: '10px', color: theme.colors.textTertiary, textTransform: 'uppercase', fontWeight: 'bold' }}>Digital Twin Summary</span>
+                        <p style={{ fontSize: '12px', color: theme.colors.textPrimary, marginTop: '2px', lineHeight: '1.4' }}>
+                          {loadingHistory ? 'Analyzing shopper behaviors...' : (digitalTwin || 'No behavioral profile found.')}
+                        </p>
+                      </div>
+                      {/* Next Best Action */}
+                      <div style={{ backgroundColor: theme.colors.accentLight, borderRadius: theme.radii.md, padding: theme.spacing.md, border: `0.5px solid ${theme.colors.borderAccent}` }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '10px', color: theme.colors.accentDark, textTransform: 'uppercase', fontWeight: 'bold' }}>Next Best Action</span>
+                          {nextAction && (
+                            <span style={{ fontSize: '10px', color: theme.colors.success, fontWeight: 'bold' }}>{nextAction.confidence}% Conf.</span>
+                          )}
+                        </div>
+                        {loadingHistory ? (
+                          <p style={{ fontSize: '12px', color: theme.colors.textSecondary, marginTop: '2px' }}>Generating recommendation...</p>
+                        ) : nextAction ? (
+                          <>
+                            <p style={{ fontSize: '12px', fontWeight: 'bold', color: theme.colors.textPrimary, marginTop: '2px' }}>{nextAction.action}</p>
+                            <p style={{ fontSize: '11px', color: theme.colors.textSecondary, marginTop: '2px' }}>{nextAction.reason}</p>
+                          </>
+                        ) : (
+                          <p style={{ fontSize: '12px', color: theme.colors.textSecondary, marginTop: '2px' }}>No recommendation available.</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
