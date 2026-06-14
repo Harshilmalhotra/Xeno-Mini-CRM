@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -68,10 +68,10 @@ Rules:
 - If the query is ambiguous, make a logical assumption and reflect it in the description.`,
         responseMimeType: 'application/json',
         responseSchema: {
-          type: 'OBJECT',
+          type: Type.OBJECT,
           properties: {
-            sqlFilter: { type: 'STRING' },
-            description: { type: 'STRING' },
+            sqlFilter: { type: Type.STRING },
+            description: { type: Type.STRING },
           },
           required: ['sqlFilter', 'description'],
         },
@@ -126,12 +126,12 @@ Rules:
 - Goal: ${goal}`,
         responseMimeType: 'application/json',
         responseSchema: {
-          type: 'ARRAY',
+          type: Type.ARRAY,
           items: {
-            type: 'OBJECT',
+            type: Type.OBJECT,
             properties: {
-              customerId: { type: 'STRING' },
-              message: { type: 'STRING' },
+              customerId: { type: Type.STRING },
+              message: { type: Type.STRING },
             },
             required: ['customerId', 'message'],
           },
@@ -175,12 +175,12 @@ Rules:
 - bestSendTime: Recommended send time (e.g. '7–9 PM' or '9–11 AM'), or null.`,
         responseMimeType: 'application/json',
         responseSchema: {
-          type: 'OBJECT',
+          type: Type.OBJECT,
           properties: {
-            summary: { type: 'STRING' },
-            bestChannel: { type: 'STRING', nullable: true },
-            recommendation: { type: 'STRING' },
-            bestSendTime: { type: 'STRING', nullable: true },
+            summary: { type: Type.STRING },
+            bestChannel: { type: Type.STRING, nullable: true },
+            recommendation: { type: Type.STRING },
+            bestSendTime: { type: Type.STRING, nullable: true },
           },
           required: ['summary', 'recommendation'],
         },
