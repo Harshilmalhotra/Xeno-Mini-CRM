@@ -2,7 +2,7 @@
 
 > **Tagline:** Tell us the business outcome you want. The AI figures out the campaign.
 
-An intelligent, AI-native autonomous marketing strategist and campaign execution platform for retail and D2C brands. Instead of manually carving out customer segments, drafting copy variations, and scheduling channels, marketers define high-level business goals. The AI handles the entire lifecycle: planning target audiences, recommending personalized A/B offers, executing campaigns across multiple simulated channels, dynamically attributing revenue, and maintaining digital twin profiles.
+An intelligent, AI-native autonomous marketing strategist and campaign execution platform for retail and D2C brands. Instead of manually carving out customer segments, drafting copy variations, and scheduling channels, marketers define high-level business goals. The AI handles the entire lifecycle: planning target audiences, recommending personalized A/B offers, executing campaigns across multiple simulated channels, dynamically attributing revenue, tracking user engagement, and maintaining digital twin profiles.
 
 ---
 
@@ -18,10 +18,9 @@ An intelligent, AI-native autonomous marketing strategist and campaign execution
 
 ---
 
-## Technical Architecture
+## Architectural & Process Diagrams
 
-The platform is structured as a TypeScript monorepo with three core systems:
-
+### 1. High-Level Component Flow
 ```mermaid
 graph TD
     User[Marketer Interface] -->|1. Business Goal Prompt / NL Segment| Frontend[Vite React SPA]
@@ -44,9 +43,176 @@ graph TD
     Backend -->|15. Push Final Insights| Frontend
 ```
 
-1. **Frontend ([frontend](file:///Users/harshil/Desktop/xeno_mini/apps/frontend)):** A responsive React SPA built with Vite, TypeScript, and TailwindCSS (configured via [theme.ts](file:///Users/harshil/Desktop/xeno_mini/apps/frontend/src/theme.ts)). Utilizes Recharts for funnel and lifecycle visualization, WebSockets for real-time campaign simulation status, and interactive timelines for the autonomous planning phase.
-2. **CRM Backend ([crm-backend](file:///Users/harshil/Desktop/xeno_mini/apps/crm-backend)):** An Express server exposing REST APIs for campaigns, customers, and segments, establishing PG connection pools to Supabase Postgres, and handling real-time WebSocket state distribution.
-3. **Channel Simulator ([channel-stub](file:///Users/harshil/Desktop/xeno_mini/apps/channel-stub)):** A simulation microservice modeling message delivery (WhatsApp, SMS, Email, RCS) with custom delays, fallback states, and mock conversion/revenue receipts sent back to the CRM backend.
+### 2. Goal-Based Autonomous Agent Flow (UML Sequence)
+The diagram below maps the complete multi-step autonomous planning, execution, callback receipt simulation, and WebSocket feed pipeline:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Marketer as Marketer (UI)
+    participant FE as React SPA (Frontend)
+    participant BE as Express Backend
+    participant Gemini as Gemini AI Service
+    participant DB as Supabase PostgreSQL
+    participant Stub as Channel Simulator
+
+    Marketer->>FE: Enters goal (e.g. "Re-engage Cold Brew buyers") & clicks "Plan Campaign"
+    activate FE
+    FE->>FE: Triggers animated loading timeline (Phase 16)
+    FE->>BE: POST /api/campaigns/plan { goal }
+    activate BE
+    BE->>Gemini: Calls Campaign Planner Prompt
+    activate Gemini
+    Note over Gemini: Recommends Segment query, Offer, Send Time, Channel, and reasoning
+    Gemini-->>BE: Returns campaign plan JSON
+    deactivate Gemini
+    BE->>DB: Executes AI SQL segment filter to get expected Reach
+    activate DB
+    DB-->>BE: Returns count of matching shoppers
+    deactivate DB
+    Note over BE: Computes expected conversions & projected revenue based on historical AOV
+    BE-->>FE: Returns structured plan response
+    deactivate BE
+    FE->>FE: Stops timeline & renders recommendations
+    Marketer->>FE: Optional: Enables A/B testing & clicks "Launch Campaign"
+    FE->>BE: POST /api/campaigns/launch { plan, is_ab_test }
+    activate BE
+    BE->>DB: Stores Segment & Campaign (draft status)
+    activate DB
+    DB-->>BE: Campaign Created
+    deactivate DB
+    Note over BE: Splits segment recipients 50/50 (Variant A vs. B)
+    BE->>Gemini: Calls Copy Personalizer in batches (passes customer order history)
+    activate Gemini
+    Gemini-->>BE: Returns individualized copies for A & B
+    deactivate Gemini
+    BE->>DB: Updates campaign status to "running" & saves campaign messages
+    BE->>Stub: POST /send { messages } (WhatsApp, SMS, etc.)
+    activate Stub
+    Stub-->>BE: Returns queue success (200 OK)
+    deactivate Stub
+    BE-->>FE: Campaign started successfully (Redirect to Live Tracker)
+    deactivate BE
+    deactivate FE
+
+    par Real-Time Simulation Delivery Logs
+        loop Delivery lifecycle events (sent, delivered, opened, clicked, converted)
+            Stub->>Stub: Wait queue delay & compute state transitions
+            Stub->>BE: POST /api/receipts { message_id, event, revenue }
+            activate BE
+            BE->>DB: Update message status, add event log, attribute revenue
+            activate DB
+            DB-->>BE: Success
+            deactivate DB
+            BE->>FE: Broadcast progress state over WebSockets
+            FE->>FE: UI counters update in real-time
+            deactivate BE
+        end
+    end
+
+    Note over Stub: All messages reach a terminal state
+    Stub->>BE: POST /api/campaigns/complete { campaign_id }
+    activate BE
+    BE->>DB: Fetch campaign status, message details, A/B metrics
+    activate DB
+    DB-->>BE: Campaign stats
+    deactivate DB
+    BE->>Gemini: Requests AI Post-Campaign Debrief
+    activate Gemini
+    Gemini-->>BE: Returns summary recommendations and winner info
+    deactivate Gemini
+    BE->>DB: Saves Campaign Debrief (stores in database)
+    BE->>FE: Broadcasts "completed" state with debrief
+    deactivate BE
+```
+
+### 3. Database Entity Relationship Diagram (UML ERD)
+Schema mappings configured inside Supabase Postgres instance, supporting relational cascade deletions and indices for performant querying:
+
+```mermaid
+erDiagram
+    CUSTOMERS {
+        uuid id PK
+        text name
+        text email UK
+        text phone
+        text city
+        timestamptz created_at
+    }
+    ORDERS {
+        uuid id PK
+        uuid customer_id FK
+        text product_name
+        text category
+        numeric amount
+        timestamptz ordered_at
+        timestamptz created_at
+    }
+    SEGMENTS {
+        uuid id PK
+        text name
+        text description
+        text nl_query
+        text sql_filter
+        uuid_array customer_ids
+        int customer_count
+        timestamptz created_at
+    }
+    CAMPAIGNS {
+        uuid id PK
+        text name
+        uuid segment_id FK
+        text channel
+        text status
+        text goal
+        timestamptz sent_at
+        boolean is_ab_test
+        text variant_a_offer
+        text variant_b_offer
+        numeric attributed_revenue
+        timestamptz created_at
+    }
+    CAMPAIGN_MESSAGES {
+        uuid id PK
+        uuid campaign_id FK
+        uuid customer_id FK
+        text message_text
+        text status
+        jsonb event_log
+        text external_id UK
+        text ab_variant
+        numeric attributed_revenue
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    CAMPAIGN_DEBRIEFS {
+        uuid id PK
+        uuid campaign_id FK "Unique"
+        text summary
+        text best_channel
+        uuid_array click_no_buy_ids
+        text recommendation
+        text best_send_time
+        jsonb ab_test_results
+        timestamptz created_at
+    }
+    CUSTOMER_TWINS {
+        uuid customer_id PK "FK to CUSTOMERS"
+        text summary
+        timestamptz updated_at
+    }
+    PROCESSED_EVENT_IDS {
+        text event_id PK
+        timestamptz processed_at
+    }
+
+    CUSTOMERS ||--o{ ORDERS : places
+    CUSTOMERS ||--o| CUSTOMER_TWINS : "has digital twin"
+    CUSTOMERS ||--o{ CAMPAIGN_MESSAGES : "receives"
+    SEGMENTS ||--o{ CAMPAIGNS : targets
+    CAMPAIGNS ||--o{ CAMPAIGN_MESSAGES : sends
+    CAMPAIGNS ||--o| CAMPAIGN_DEBRIEFS : debriefs
+```
 
 ---
 
@@ -68,6 +234,10 @@ graph TD
 - 🧬 **Customer Digital Twin (Phase 14):** Generates custom summaries for customers based on behavior trends, channel preference, and purchase cycles via [customerTwin.ts](file:///Users/harshil/Desktop/xeno_mini/apps/crm-backend/src/services/customerTwin.ts), cached in Supabase (`customer_twins` table) for 24 hours to maximize performance.
 - 💡 **Next Best Action Engine (Phase 10):** Automatically calculates recommendations and confidence ratings (e.g., *"Send Subscription Offer (Confidence: 87%)"* due to past order gaps) in [nextBestAction.ts](file:///Users/harshil/Desktop/xeno_mini/apps/crm-backend/src/services/nextBestAction.ts).
 - 🔓 **Explainable AI (Phase 11):** Integrates transparent annotations explaining why specific segments, channels, or campaign targets were chosen by the AI.
+
+### 📈 Product Tracking & Telemetry
+- 📊 **Microsoft Clarity Integration:** Real-time visual heatmaps and user session recording streams recorded in the production interface.
+- ⚡ **Vercel Analytics:** Measures performance web vitals, speed indexes, and active user metrics natively.
 
 ---
 
@@ -112,6 +282,7 @@ Create [frontend/.env](file:///Users/harshil/Desktop/xeno_mini/apps/frontend/.en
 ```ini
 VITE_CRM_API_URL=http://localhost:4000
 VITE_WS_URL=ws://localhost:4000
+VITE_CLARITY_PROJECT_ID=x71xodfw85
 ```
 
 ### 4. Database Schema Seeding
