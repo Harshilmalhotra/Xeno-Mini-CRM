@@ -47,7 +47,7 @@ export async function generateSegmentFilter(
 ): Promise<{ sqlFilter: string; description: string }> {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-latest',
       contents: `Generate a SQL segment HAVING filter for: "${nlQuery}"`,
       config: {
         systemInstruction: `You are a SQL expert for a retail CRM. Given a natural language query about customers, generate a HAVING clause filter for the following aggregated view:
@@ -110,7 +110,7 @@ export async function generatePersonalisedMessages(
 
   const runBatch = async (batch: CustomerWithHistory[]) => {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-latest',
       contents: JSON.stringify(batch),
       config: {
         systemInstruction: `You are a CRM messaging agent for Roastery Co., a premium coffee brand.
@@ -161,7 +161,7 @@ export async function generateCampaignDebrief(
 ): Promise<DebriefResult> {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-latest',
       contents: `Campaign Results: ${JSON.stringify(stats)}`,
       config: {
         systemInstruction: `You are a marketing analytics AI for Roastery Co. Analyze the provided campaign stats and write a brief, plain-English summary.
