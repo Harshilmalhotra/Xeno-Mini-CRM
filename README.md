@@ -33,19 +33,24 @@ Instead of asking marketers to decide the audience, offer, channel, and timing, 
 
 ### AI Campaign Planner
 
-![Campaign Planner](./docs/screenshots/planner.png)
+<img width="2940" height="1574" alt="image" src="https://github.com/user-attachments/assets/bd363cbd-e7ae-4698-b7a8-547c6fd4da3d" />
+<img width="2936" height="1578" alt="image" src="https://github.com/user-attachments/assets/7ea40cd9-e72a-48a2-8892-f4c92c0004ec" />
+
 
 ### Opportunity Discovery
 
-![Opportunity Discovery](./docs/screenshots/opportunities.png)
+<img width="2940" height="1590" alt="image" src="https://github.com/user-attachments/assets/ce10272e-28ab-40bd-84a7-07bfc046c69a" />
 
 ### Live Campaign Tracker
 
-![Live Tracker](./docs/screenshots/tracker.png)
+<img width="2926" height="1590" alt="image" src="https://github.com/user-attachments/assets/f4a4319d-94af-4afe-b9a0-bd474cf9b7fb" />
+
 
 ### Customer Digital Twin
 
-![Digital Twin](./docs/screenshots/customer.png)
+<img width="2938" height="1582" alt="image" src="https://github.com/user-attachments/assets/c9be1afe-db12-43f7-af46-7a4f2d67b70b" />
+<img width="2936" height="1584" alt="image" src="https://github.com/user-attachments/assets/d6f599b1-4216-40cd-aafb-8b7dfecf3f34" />
+
 
 ---
 
