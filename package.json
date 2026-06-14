@@ -1,0 +1,14 @@
+{
+  "name": "xeno-mini-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=crm-backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:stub": "npm run dev --workspace=channel-stub",
+    "seed": "npm run seed --workspace=crm-backend"
+  }
+}
