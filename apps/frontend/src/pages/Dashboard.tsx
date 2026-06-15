@@ -7,7 +7,7 @@ import { MessagePreviewer } from '../components/MessagePreviewer';
 import { LiveCampaignTracker } from '../components/LiveCampaignTracker';
 import { AiDebriefCard } from '../components/AiDebriefCard';
 import { StatCard } from '../components/StatCard';
-import { SkeletonCard } from '../components/Skeleton';
+import { Skeleton, SkeletonCard } from '../components/Skeleton';
 import { useSearchParams } from 'react-router-dom';
 import { Target, Crown, Trophy, Gift, Clock, Radio, Lightbulb, Eye, BarChart2 } from 'lucide-react';
 
@@ -935,7 +935,26 @@ export function Dashboard() {
               <span>Loyalty Tier Distribution</span>
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.md, marginTop: theme.spacing.sm }}>
-              {Object.entries(loyaltyCounts).map(([tier, count], idx) => {
+              {isLoadingDashboard ? (
+                <>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><Skeleton width="40%" height="16px" /><Skeleton width="30%" height="16px" /></div>
+                    <Skeleton height="8px" borderRadius={theme.radii.full} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><Skeleton width="40%" height="16px" /><Skeleton width="30%" height="16px" /></div>
+                    <Skeleton height="8px" borderRadius={theme.radii.full} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><Skeleton width="40%" height="16px" /><Skeleton width="30%" height="16px" /></div>
+                    <Skeleton height="8px" borderRadius={theme.radii.full} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><Skeleton width="40%" height="16px" /><Skeleton width="30%" height="16px" /></div>
+                    <Skeleton height="8px" borderRadius={theme.radii.full} />
+                  </div>
+                </>
+              ) : Object.entries(loyaltyCounts).map(([tier, count], idx) => {
                 const total = stats.totalCustomers || 1;
                 const percent = Math.round((count / total) * 100);
                 const color = loyaltyColors[idx];
@@ -981,7 +1000,13 @@ export function Dashboard() {
               <span>Top Revenue Campaigns</span>
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
-              {revenueLeaderboard.length === 0 ? (
+              {isLoadingDashboard ? (
+                <>
+                  <Skeleton height="64px" borderRadius={theme.radii.md} />
+                  <Skeleton height="64px" borderRadius={theme.radii.md} />
+                  <Skeleton height="64px" borderRadius={theme.radii.md} />
+                </>
+              ) : revenueLeaderboard.length === 0 ? (
                 <div style={{ textAlign: 'center', color: theme.colors.textTertiary, fontStyle: 'italic', padding: theme.spacing.xl }}>
                   No conversions recorded yet. Launch a campaign to see revenue!
                 </div>
@@ -1034,13 +1059,19 @@ export function Dashboard() {
           </div>
 
           {/* Recent Campaigns Section */}
-          {recentCampaigns.length > 0 && (
+          {(isLoadingDashboard || recentCampaigns.length > 0) && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.md }}>
               <h2 style={{ fontSize: theme.typography.sizeBase, fontWeight: theme.typography.weightBold, color: theme.colors.textPrimary }}>
                 Recent Autopilot Launches
               </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
-                {recentCampaigns.map((camp) => (
+                {isLoadingDashboard ? (
+                  <>
+                    <SkeletonCard />
+                    <SkeletonCard />
+                    <SkeletonCard />
+                  </>
+                ) : recentCampaigns.map((camp) => (
                   <div key={camp.id} style={{
                     backgroundColor: theme.colors.bgPrimary,
                     border: `0.5px solid ${theme.colors.borderDefault}`,
