@@ -15,6 +15,12 @@ export function Campaigns() {
 
   const loadCampaigns = async () => {
     try {
+      const cached = api.getCached<any[]>('/api/campaigns');
+      if (cached) {
+        setCampaigns(cached);
+        setIsLoading(false);
+      }
+
       const data = await api.get<any[]>('/api/campaigns');
       setCampaigns(data);
     } catch (err) {

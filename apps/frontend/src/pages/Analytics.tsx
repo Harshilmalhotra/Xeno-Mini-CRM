@@ -23,80 +23,90 @@ export function Analytics() {
   const [segmentData, setSegmentData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const processAnalyticsData = (custs: any[], campaigns: any[]) => {
+    setCamps(campaigns);
+
+    const channels = ['whatsapp', 'sms', 'email', 'rcs'];
+    const statsByChannel = channels.map(chan => {
+      const matching = campaigns.filter(c => c.channel.toLowerCase() === chan);
+      let sent = 0;
+      let delivered = 0;
+      let opened = 0;
+      let clicked = 0;
+      
+      matching.forEach(c => {
+        sent += c.sent_count || 0;
+        delivered += c.delivered_count || 0;
+        opened += c.opened_count || 0;
+        clicked += c.clicked_count || 0;
+      });
+
+      return {
+        name: chan.toUpperCase(),
+        'Delivered %': sent > 0 ? Math.round((delivered / sent) * 100) : 0,
+        'Opened %': sent > 0 ? Math.round((opened / sent) * 100) : 0,
+        'Clicked %': sent > 0 ? Math.round((clicked / sent) * 100) : 0,
+      };
+    });
+    setChannelData(statsByChannel);
+
+    let active = 0;
+    let atRisk = 0;
+    let lapsing = 0;
+    let churned = 0;
+
+    custs.forEach(c => {
+      const days = c.daysSinceLastOrder;
+      if (days <= 7) active++;
+      else if (days <= 30) atRisk++;
+      else if (days <= 60) lapsing++;
+      else churned++;
+    });
+
+    setFunnelData([
+      { value: active, name: 'Active (0-7d)', fill: theme.colors.churnLow },
+      { value: atRisk, name: 'At-Risk (8-30d)', fill: theme.colors.churnMedium },
+      { value: lapsing, name: 'Lapsing (31-60d)', fill: theme.colors.churnLapsing },
+      { value: churned, name: 'Churned (60d+)', fill: theme.colors.churnHigh },
+    ]);
+
+    const segMap = new Map<string, { name: string; clicked: number; sent: number }>();
+    campaigns.forEach(c => {
+      const key = c.segment_id || 'default';
+      const name = c.segment_name || 'Lapsed Customers';
+      if (!segMap.has(key)) {
+        segMap.set(key, { name, clicked: 0, sent: 0 });
+      }
+      const curr = segMap.get(key)!;
+      curr.clicked += c.clicked_count || 0;
+      curr.sent += c.sent_count || 0;
+    });
+
+    const list: any[] = [];
+    segMap.forEach((val) => {
+      list.push({
+        name: val.name,
+        clickRate: val.sent > 0 ? Math.round((val.clicked / val.sent) * 100) : 0,
+        volume: val.sent
+      });
+    });
+    list.sort((a, b) => b.clickRate - a.clickRate);
+    setSegmentData(list.slice(0, 5));
+  };
+
   const loadData = async () => {
     try {
+      const cachedCusts = api.getCached<any[]>('/api/customers');
+      const cachedCampaigns = api.getCached<any[]>('/api/campaigns');
+      if (cachedCusts && cachedCampaigns) {
+        processAnalyticsData(cachedCusts, cachedCampaigns);
+        setIsLoading(false);
+      }
+
       const custs = await api.get<any[]>('/api/customers');
       const campaigns = await api.get<any[]>('/api/campaigns');
       
-      setCamps(campaigns);
-
-      const channels = ['whatsapp', 'sms', 'email', 'rcs'];
-      const statsByChannel = channels.map(chan => {
-        const matching = campaigns.filter(c => c.channel.toLowerCase() === chan);
-        let sent = 0;
-        let delivered = 0;
-        let opened = 0;
-        let clicked = 0;
-        
-        matching.forEach(c => {
-          sent += c.sent_count || 0;
-          delivered += c.delivered_count || 0;
-          opened += c.opened_count || 0;
-          clicked += c.clicked_count || 0;
-        });
-
-        return {
-          name: chan.toUpperCase(),
-          'Delivered %': sent > 0 ? Math.round((delivered / sent) * 100) : 0,
-          'Opened %': sent > 0 ? Math.round((opened / sent) * 100) : 0,
-          'Clicked %': sent > 0 ? Math.round((clicked / sent) * 100) : 0,
-        };
-      });
-      setChannelData(statsByChannel);
-
-      let active = 0;
-      let atRisk = 0;
-      let lapsing = 0;
-      let churned = 0;
-
-      custs.forEach(c => {
-        const days = c.daysSinceLastOrder;
-        if (days <= 7) active++;
-        else if (days <= 30) atRisk++;
-        else if (days <= 60) lapsing++;
-        else churned++;
-      });
-
-      setFunnelData([
-        { value: active, name: 'Active (0-7d)', fill: theme.colors.churnLow },
-        { value: atRisk, name: 'At-Risk (8-30d)', fill: theme.colors.churnMedium },
-        { value: lapsing, name: 'Lapsing (31-60d)', fill: theme.colors.churnLapsing },
-        { value: churned, name: 'Churned (60d+)', fill: theme.colors.churnHigh },
-      ]);
-
-      const segMap = new Map<string, { name: string; clicked: number; sent: number }>();
-      campaigns.forEach(c => {
-        const key = c.segment_id || 'default';
-        const name = c.segment_name || 'Lapsed Customers';
-        if (!segMap.has(key)) {
-          segMap.set(key, { name, clicked: 0, sent: 0 });
-        }
-        const curr = segMap.get(key)!;
-        curr.clicked += c.clicked_count || 0;
-        curr.sent += c.sent_count || 0;
-      });
-
-      const list: any[] = [];
-      segMap.forEach((val) => {
-        list.push({
-          name: val.name,
-          clickRate: val.sent > 0 ? Math.round((val.clicked / val.sent) * 100) : 0,
-          volume: val.sent
-        });
-      });
-      list.sort((a, b) => b.clickRate - a.clickRate);
-      setSegmentData(list.slice(0, 5));
-
+      processAnalyticsData(custs, campaigns);
     } catch (err) {
       console.error('Failed to load analytics charts:', err);
     } finally {

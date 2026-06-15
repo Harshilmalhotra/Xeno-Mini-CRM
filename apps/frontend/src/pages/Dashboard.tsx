@@ -56,47 +56,57 @@ export function Dashboard() {
     'Finalizing segment SQL filters...'
   ];
 
+  const processDashboardData = (customers: any[], campaigns: any[]) => {
+    const active = campaigns.filter(c => c.status === 'running').length;
+    
+    let totalSent = 0;
+    let totalRev = 0;
+    campaigns.forEach(c => {
+      totalSent += c.sent_count || 0;
+      totalRev += parseFloat(c.attributed_revenue || '0');
+    });
+
+    setStats({
+      totalCustomers: customers.length,
+      activeCampaigns: active,
+      sentThisMonth: totalSent,
+      totalRevenue: Math.round(totalRev)
+    });
+
+    // Calculate loyalty distribution
+    let bronze = 0, silver = 0, gold = 0, platinum = 0;
+    customers.forEach(c => {
+      const spend = c.totalSpend || 0;
+      if (spend > 10000) platinum++;
+      else if (spend > 5000) gold++;
+      else if (spend > 2000) silver++;
+      else bronze++;
+    });
+    setLoyaltyCounts({ Bronze: bronze, Silver: silver, Gold: gold, Platinum: platinum });
+
+    // Recent campaigns
+    setRecentCampaigns(campaigns.slice(0, 3));
+
+    // Revenue Leaderboard (sorted by revenue desc)
+    const sortedByRev = [...campaigns]
+      .filter(c => parseFloat(c.attributed_revenue || '0') > 0)
+      .sort((a, b) => parseFloat(b.attributed_revenue) - parseFloat(a.attributed_revenue));
+    setRevenueLeaderboard(sortedByRev.slice(0, 4));
+  };
+
   const loadDashboardData = async () => {
     try {
+      const cachedCustomers = api.getCached<any[]>('/api/customers');
+      const cachedCampaigns = api.getCached<any[]>('/api/campaigns');
+      if (cachedCustomers && cachedCampaigns) {
+        processDashboardData(cachedCustomers, cachedCampaigns);
+        setIsLoadingDashboard(false);
+      }
+
       const customers = await api.get<any[]>('/api/customers');
       const campaigns = await api.get<any[]>('/api/campaigns');
-
-      const active = campaigns.filter(c => c.status === 'running').length;
       
-      let totalSent = 0;
-      let totalRev = 0;
-      campaigns.forEach(c => {
-        totalSent += c.sent_count || 0;
-        totalRev += parseFloat(c.attributed_revenue || '0');
-      });
-
-      setStats({
-        totalCustomers: customers.length,
-        activeCampaigns: active,
-        sentThisMonth: totalSent,
-        totalRevenue: Math.round(totalRev)
-      });
-
-      // Calculate loyalty distribution
-      let bronze = 0, silver = 0, gold = 0, platinum = 0;
-      customers.forEach(c => {
-        const spend = c.totalSpend || 0;
-        if (spend > 10000) platinum++;
-        else if (spend > 5000) gold++;
-        else if (spend > 2000) silver++;
-        else bronze++;
-      });
-      setLoyaltyCounts({ Bronze: bronze, Silver: silver, Gold: gold, Platinum: platinum });
-
-      // Recent campaigns
-      setRecentCampaigns(campaigns.slice(0, 3));
-
-      // Revenue Leaderboard (sorted by revenue desc)
-      const sortedByRev = [...campaigns]
-        .filter(c => parseFloat(c.attributed_revenue || '0') > 0)
-        .sort((a, b) => parseFloat(b.attributed_revenue) - parseFloat(a.attributed_revenue));
-      setRevenueLeaderboard(sortedByRev.slice(0, 4));
-
+      processDashboardData(customers, campaigns);
     } catch (err) {
       console.error('Failed to load dashboard statistics:', err);
     } finally {

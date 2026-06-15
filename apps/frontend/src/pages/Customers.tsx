@@ -34,6 +34,13 @@ export function Customers() {
 
   const loadCustomers = async () => {
     try {
+      const cached = api.getCached<any[]>('/api/customers');
+      if (cached) {
+        setCustomers(cached);
+        setFiltered(cached);
+        setIsLoading(false);
+      }
+
       const data = await api.get<any[]>('/api/customers');
       setCustomers(data);
       setFiltered(data);
