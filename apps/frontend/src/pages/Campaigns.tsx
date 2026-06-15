@@ -3,12 +3,14 @@ import { theme } from '../theme';
 import { api } from '../api/client';
 import { LiveCampaignTracker } from '../components/LiveCampaignTracker';
 import { AiDebriefCard } from '../components/AiDebriefCard';
+import { Skeleton } from '../components/Skeleton';
 import { useNavigate } from 'react-router-dom';
 import { Trophy, BarChart2 } from 'lucide-react';
 
 export function Campaigns() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   const loadCampaigns = async () => {
@@ -17,6 +19,8 @@ export function Campaigns() {
       setCampaigns(data);
     } catch (err) {
       console.error('Failed to load campaigns:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -86,7 +90,21 @@ export function Campaigns() {
               </tr>
             </thead>
             <tbody>
-              {campaigns.length === 0 ? (
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, idx) => (
+                  <tr key={idx} style={{ borderBottom: `1px solid ${theme.colors.borderDefault}` }}>
+                    <td style={{ padding: theme.spacing.md }}><Skeleton height="20px" width="80%" /></td>
+                    <td style={{ padding: theme.spacing.md }}><Skeleton height="20px" width="60%" /></td>
+                    <td style={{ padding: theme.spacing.md }}><Skeleton height="20px" width="70%" /></td>
+                    <td style={{ padding: theme.spacing.md }}><Skeleton height="20px" width="40%" /></td>
+                    <td style={{ padding: theme.spacing.md }}><Skeleton height="20px" width="40%" /></td>
+                    <td style={{ padding: theme.spacing.md }}><Skeleton height="20px" width="40%" /></td>
+                    <td style={{ padding: theme.spacing.md }}><Skeleton height="20px" width="50%" /></td>
+                    <td style={{ padding: theme.spacing.md }}><Skeleton height="24px" width="80%" borderRadius={theme.radii.sm} /></td>
+                    <td style={{ padding: theme.spacing.md }}><Skeleton height="20px" width="60%" /></td>
+                  </tr>
+                ))
+              ) : campaigns.length === 0 ? (
                 <tr>
                   <td colSpan={9} style={{ textAlign: 'center', padding: theme.spacing.xl, color: theme.colors.textTertiary, fontStyle: 'italic' }}>
                     No campaigns created yet. Start one on the dashboard!

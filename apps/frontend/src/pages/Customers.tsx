@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { theme } from '../theme';
 import { api } from '../api/client';
 import { ChurnRingBadge } from '../components/ChurnRingBadge';
+import { SkeletonCard } from '../components/Skeleton';
 import { MapPin, Coffee } from 'lucide-react';
 
 const getLoyaltyTierInfo = (totalSpend: number) => {
@@ -19,6 +20,7 @@ const getLoyaltyTierInfo = (totalSpend: number) => {
 export function Customers() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [riskFilter, setRiskFilter] = useState<'all' | 'low' | 'medium' | 'high'>('all');
@@ -37,6 +39,8 @@ export function Customers() {
       setFiltered(data);
     } catch (err) {
       console.error('Failed to load customers:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -196,7 +200,16 @@ export function Customers() {
         gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
         gap: theme.spacing.xl
       }}>
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </>
+        ) : filtered.length === 0 ? (
           <div style={{
             gridColumn: '1 / -1',
             textAlign: 'center',

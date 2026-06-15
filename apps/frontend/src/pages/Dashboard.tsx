@@ -7,6 +7,7 @@ import { MessagePreviewer } from '../components/MessagePreviewer';
 import { LiveCampaignTracker } from '../components/LiveCampaignTracker';
 import { AiDebriefCard } from '../components/AiDebriefCard';
 import { StatCard } from '../components/StatCard';
+import { SkeletonCard } from '../components/Skeleton';
 import { useSearchParams } from 'react-router-dom';
 import { Target, Crown, Trophy, Gift, Clock, Radio, Lightbulb, Eye, BarChart2 } from 'lucide-react';
 
@@ -26,6 +27,7 @@ export function Dashboard() {
   const [loyaltyCounts, setLoyaltyCounts] = useState({ Bronze: 0, Silver: 0, Gold: 0, Platinum: 0 });
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [loadingOpportunities, setLoadingOpportunities] = useState(false);
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
 
   // Flow states: idle | planning | plan_preview | preview | messages | launching | tracker
   const [flowState, setFlowState] = useState<'idle' | 'planning' | 'plan_preview' | 'preview' | 'messages' | 'launching' | 'tracker'>('idle');
@@ -97,6 +99,8 @@ export function Dashboard() {
 
     } catch (err) {
       console.error('Failed to load dashboard statistics:', err);
+    } finally {
+      setIsLoadingDashboard(false);
     }
   };
 
@@ -278,10 +282,21 @@ export function Dashboard() {
 
       {/* Metric Stat Cards */}
       <div style={{ display: 'flex', gap: theme.spacing.md, flexWrap: 'wrap' }}>
-        <StatCard title="Total Shoppers" value={stats.totalCustomers} trend="Dynamic CRM scale" isPositive={true} />
-        <StatCard title="Active Campaigns" value={stats.activeCampaigns} />
-        <StatCard title="Messages Sent" value={stats.sentThisMonth} />
-        <StatCard title="Autopilot Revenue" value={`₹${stats.totalRevenue}`} trend="Attributed Conversions" isPositive={true} />
+        {isLoadingDashboard ? (
+          <>
+            <div style={{ flex: 1 }}><SkeletonCard /></div>
+            <div style={{ flex: 1 }}><SkeletonCard /></div>
+            <div style={{ flex: 1 }}><SkeletonCard /></div>
+            <div style={{ flex: 1 }}><SkeletonCard /></div>
+          </>
+        ) : (
+          <>
+            <StatCard title="Total Shoppers" value={stats.totalCustomers} trend="Dynamic CRM scale" isPositive={true} />
+            <StatCard title="Active Campaigns" value={stats.activeCampaigns} />
+            <StatCard title="Messages Sent" value={stats.sentThisMonth} />
+            <StatCard title="Autopilot Revenue" value={`₹${stats.totalRevenue}`} trend="Attributed Conversions" isPositive={true} />
+          </>
+        )}
       </div>
 
       {/* 1. Goal-Based Autonomous Agent Flow (TIMELINE PLANNING STATE) */}

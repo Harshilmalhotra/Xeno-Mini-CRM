@@ -15,4 +15,13 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(26,26,25,0.15); border-radius: 9999px; }
 
-::selection { background: #FAE8DC; color: #8A3D18; }
+::-selection { background: #FAE8DC; color: #8A3D18; }
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
